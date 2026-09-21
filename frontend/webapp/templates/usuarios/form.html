@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui with context %}
+{% set criar = modo == 'criar' %}
+{% block title %}{{ 'Novo usuário' if criar else 'Editar usuário' }}{% endblock %}
+{% block content %}
+{% call ui.header('Novo usuário' if criar else 'Editar usuário', 'Defina o acesso ao sistema.' if criar else alvo.email, crumbs=[('/usuarios', 'Usuários'), (none, 'Novo' if criar else 'Editar')]) %}{% endcall %}
+<div class="row g-4">
+  <div class="col-lg-7">
+    <form method="post" novalidate class="card anim-in"><div class="card-body p-4">
+      {{ ui.csrf() }}
+      <div class="row g-3">
+        {{ ui.field('nome', 'Nome', form, erros, required=True, cols='col-12', autofocus=True, maxlength=150) }}
+        {% if criar %}{{ ui.field('email', 'E-mail', form, erros, type='email', required=True, cols='col-md-7', placeholder='nome@secretaria.gov.br') }}{% endif %}
+        <div class="{{ 'col-md-5' if criar else 'col-12' }}"><label class="form-label" for="perfil">Perfil<span class="req">*</span></label>
+          <select class="form-select" id="perfil" name="perfil">{% for o in meta.perfis_usuario %}<option value="{{ o.valor }}" {{ 'selected' if form.get('perfil') == o.valor }}>{{ o.rotulo }}</option>{% endfor %}</select></div>
+        {% if criar %}
+        <div class="col-12"><label class="form-label" for="senha">Senha inicial<span class="req">*</span></label>
+          <div class="input-icon"><i class="bi bi-lock"></i><input class="form-control {{ 'is-invalid' if erros.get('senha') }}" id="senha" type="password" name="senha" required autocomplete="new-password" style="padding-right:2.6rem"><button class="btn btn-ghost btn-icon toggle-pw" type="button" data-toggle-password="#senha" aria-label="Mostrar senha"><i class="bi bi-eye"></i></button></div>
+          {% if erros.get('senha') %}<div class="invalid-feedback d-block">{{ erros['senha'] }}</div>{% else %}<div class="form-text">Mínimo de 8 caracteres, com letra e número.</div>{% endif %}</div>
+        {% else %}
+        <div class="col-12"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" id="ativo" name="ativo" value="1" {{ 'checked' if form.get('ativo') }} {{ 'disabled' if alvo.id == user.id }}><label class="form-check-label" for="ativo">Usuário ativo <span class="text-muted">(inativos não conseguem entrar)</span></label></div>
+          {% if alvo.id == user.id %}<input type="hidden" name="ativo" value="1"><div class="form-text">Você não pode desativar a si mesmo nem mudar o próprio perfil.</div>{% endif %}</div>
+        {% endif %}
+      </div></div>
+      <div class="card-header border-top border-bottom-0 justify-content-end gap-2"><a class="btn btn-outline" href="/usuarios">Cancelar</a><button class="btn btn-primary" type="submit"><i class="bi bi-check2"></i> {{ 'Criar usuário' if criar else 'Salvar' }}</button></div>
+    </form>
+  </div>
+  {% if not criar %}
+  <div class="col-lg-5"><form method="post" action="/usuarios/{{ alvo.id }}/senha" class="card anim-in" style="--i:1"><div class="card-header"><h2 class="card-title"><i class="bi bi-key"></i> Redefinir senha</h2></div>
+    <div class="card-body">{{ ui.csrf() }}<p class="small text-muted">Define uma nova senha, desbloqueia a conta e encerra as sessões abertas.</p>
+      <label class="form-label" for="nova_senha">Nova senha</label><input class="form-control mb-3" id="nova_senha" type="password" name="nova_senha" required autocomplete="new-password">
+      <button class="btn btn-outline w-100" type="submit"><i class="bi bi-key"></i> Redefinir senha</button></div></form></div>
+  {% endif %}
+</div>
+{% endblock %}

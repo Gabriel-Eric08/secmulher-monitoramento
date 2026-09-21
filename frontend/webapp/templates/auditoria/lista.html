@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui with context %}
+{% block title %}Auditoria{% endblock %}
+{% block content %}
+{% call ui.header("Auditoria", "Registro somente leitura de tudo o que foi feito no sistema.") %}{% endcall %}
+<div class="card table-card anim-in">
+  <form method="get" class="filter-bar" data-autosubmit-form>
+    <select class="form-select" name="acao" data-autosubmit aria-label="Ação"><option value="">Todas as ações</option>{% for o in meta.acoes_auditoria %}<option value="{{ o.valor }}" {{ 'selected' if f.get('acao') == o.valor }}>{{ o.rotulo }}</option>{% endfor %}</select>
+    <select class="form-select" name="entidade" data-autosubmit aria-label="Entidade"><option value="">Todas as entidades</option>
+      {% for k, l in [('mulher','Mulher'),('servico_mulher','Atendimento'),('evento','Evento'),('documento','Documento'),('servico','Serviço'),('usuario','Usuário')] %}<option value="{{ k }}" {{ 'selected' if f.get('entidade') == k }}>{{ l }}</option>{% endfor %}</select>
+    <div class="d-flex align-items-center gap-2"><span class="small text-muted">De</span><input class="form-control" type="date" name="de" value="{{ f.get('de', '') }}" data-autosubmit><span class="small text-muted">até</span><input class="form-control" type="date" name="ate" value="{{ f.get('ate', '') }}" data-autosubmit></div>
+    {% if f.get('mulher_id') %}<span class="chip">Uma mulher <a href="{{ qs(mulher_id=None) }}" aria-label="Remover filtro"><i class="bi bi-x"></i></a></span><input type="hidden" name="mulher_id" value="{{ f.get('mulher_id') }}">{% endif %}
+    {% if f.get('acao') or f.get('entidade') or f.get('de') or f.get('ate') or f.get('mulher_id') %}<a class="btn btn-ghost btn-sm" href="/auditoria"><i class="bi bi-x-lg"></i> Limpar</a>{% endif %}
+  </form>
+  {% if res["items"] %}
+  <div class="table-responsive"><table class="table table-hover"><thead><tr><th>Quando</th><th>Usuário</th><th>Ação</th><th>Entidade</th><th>IP</th><th class="text-end"></th></tr></thead><tbody>
+  {% for r in res["items"] %}<tr style="--i:{{ loop.index0 }}" data-href="/auditoria/{{ r.id }}">
+    <td class="text-nowrap">{{ r.created_at|dt('%d/%m/%Y %H:%M:%S') }}</td>
+    <td>{% if r.usuario %}<div class="d-flex align-items-center gap-2">{{ ui.avatar(r.usuario.nome, 'avatar-sm') }}{{ r.usuario.nome }}</div>{% else %}<span class="text-muted">— (anônimo)</span>{% endif %}</td>
+    <td><span class="status-badge {{ ACAO_CLASSE.get(r.acao, '') }}">{{ rot('acoes_auditoria', r.acao) }}</span></td>
+    <td><span class="mono">{{ r.entidade }}</span></td><td class="text-muted mono">{{ r.ip|vazio }}</td>
+    <td class="text-end"><a class="btn btn-ghost btn-icon" href="/auditoria/{{ r.id }}" title="Detalhes"><i class="bi bi-eye"></i></a></td></tr>{% endfor %}
+  </tbody></table></div>{{ ui.pager(res) }}
+  {% else %}{{ ui.empty('bi-shield-check', 'Nenhum registro encontrado', 'Ajuste os filtros.') }}{% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui with context %}
+{% block title %}Auditoria{% endblock %}
+{% block content %}
+{% call ui.header("Registro de auditoria", rot('acoes_auditoria', reg.acao) ~ " · " ~ reg.entidade, crumbs=[('/auditoria', 'Auditoria'), (none, 'Detalhe')]) %}
+  {% if reg.mulher_id %}<a class="btn btn-outline" href="/mulheres/{{ reg.mulher_id }}"><i class="bi bi-person-heart"></i> Ver mulher</a>{% endif %}{% endcall %}
+<div class="row g-4">
+  <div class="col-lg-4"><div class="card anim-in"><div class="card-header"><h2 class="card-title">Quem, quando e onde</h2><span class="status-badge {{ ACAO_CLASSE.get(reg.acao, '') }}">{{ rot('acoes_auditoria', reg.acao) }}</span></div>
+    <div class="card-body"><dl class="kv" style="grid-template-columns:100px 1fr">
+      <dt>Usuário</dt><dd>{{ reg.usuario.nome if reg.usuario else '— (anônimo)' }}</dd>
+      <dt>Quando</dt><dd>{{ reg.created_at|dt('%d/%m/%Y %H:%M:%S') }}</dd>
+      <dt>Entidade</dt><dd class="mono">{{ reg.entidade }}</dd>
+      <dt>ID</dt><dd class="mono" style="word-break:break-all">{{ reg.entidade_id|vazio }}</dd>
+      <dt>IP</dt><dd class="mono">{{ reg.ip|vazio }}</dd>
+      <dt>Requisição</dt><dd class="mono" style="word-break:break-all">{{ reg.request_id|vazio }}</dd>
+      <dt>Navegador</dt><dd class="small text-muted" style="word-break:break-word">{{ reg.user_agent|vazio }}</dd>
+    </dl></div></div></div>
+  <div class="col-lg-8"><div class="card table-card anim-in" style="--i:1"><div class="card-header"><h2 class="card-title">Alterações</h2><span class="badge badge-outline">{{ linhas|selectattr('mudou')|list|length }} campo(s) alterado(s)</span></div>
+    {% if linhas %}<div class="table-responsive"><table class="table"><thead><tr><th>Campo</th><th>Antes</th><th>Depois</th></tr></thead><tbody>
+      {% for l in linhas %}<tr class="diff-row {{ 'changed' if l.mudou }}"><td class="mono">{{ l.campo }}</td>
+        <td>{% if l.antes is none %}<span class="text-muted">—</span>{% elif l.mudou %}<span class="diff-old">{{ l.antes }}</span>{% else %}{{ l.antes }}{% endif %}</td>
+        <td>{% if l.depois is none %}<span class="text-muted">—</span>{% elif l.mudou %}<span class="diff-new">{{ l.depois }}</span>{% else %}<span class="text-muted">{{ l.depois }}</span>{% endif %}</td></tr>{% endfor %}
+    </tbody></table></div>
+    {% else %}{{ ui.empty('bi-file-earmark-text', 'Sem dados registrados', 'Esta ação (ex.: leitura ou login) não altera dados.') }}{% endif %}</div></div>
+</div>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui with context %}
+{% block title %}Meu perfil{% endblock %}
+{% block content %}
+{% call ui.header("Meu perfil", "Seus dados de acesso.") %}{% endcall %}
+<div class="row g-4">
+  <div class="col-lg-5"><div class="card anim-in"><div class="card-body text-center p-4">
+    <span class="avatar avatar-lg mx-auto mb-3">{{ me.nome|iniciais }}</span>
+    <h2 class="h5 mb-1">{{ me.nome }}</h2><div class="text-muted">{{ me.email }}</div>
+    <span class="badge badge-soft mt-3">{{ rot('perfis_usuario', me.perfil) }}</span>
+    <div class="divider"></div><div class="small text-muted">Último acesso: {{ me.ultimo_login_em|dt }}</div></div></div></div>
+  <div class="col-lg-7"><form method="post" action="/perfil/senha" novalidate class="card anim-in" style="--i:1"><div class="card-header"><h2 class="card-title"><i class="bi bi-key"></i> Alterar senha</h2></div>
+    <div class="card-body">{{ ui.csrf() }}
+      <div class="mb-3"><label class="form-label" for="senha_atual">Senha atual</label><input class="form-control {{ 'is-invalid' if erros.get('senha_atual') }}" id="senha_atual" type="password" name="senha_atual" required autocomplete="current-password">{% if erros.get('senha_atual') %}<div class="invalid-feedback d-block">{{ erros['senha_atual'] }}</div>{% endif %}</div>
+      <div class="mb-3"><label class="form-label" for="nova_senha">Nova senha</label><input class="form-control {{ 'is-invalid' if erros.get('nova_senha') }}" id="nova_senha" type="password" name="nova_senha" required autocomplete="new-password">{% if erros.get('nova_senha') %}<div class="invalid-feedback d-block">{{ erros['nova_senha'] }}</div>{% else %}<div class="form-text">Mínimo de 8 caracteres, com letra e número.</div>{% endif %}</div>
+      <div class="mb-4"><label class="form-label" for="confirmar">Confirmar nova senha</label><input class="form-control {{ 'is-invalid' if erros.get('confirmar') }}" id="confirmar" type="password" name="confirmar" required autocomplete="new-password">{% if erros.get('confirmar') %}<div class="invalid-feedback d-block">{{ erros['confirmar'] }}</div>{% endif %}</div>
+      <button class="btn btn-primary" type="submit"><i class="bi bi-check2"></i> Alterar senha</button>
+      <div class="form-text mt-3">Depois de trocar, você precisará entrar novamente em todos os dispositivos.</div></div></form></div>
+</div>
+{% endblock %}

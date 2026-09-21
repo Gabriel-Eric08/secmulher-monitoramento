@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui with context %}
+{% block title %}Usuários{% endblock %}
+{% block content %}
+{% call ui.header("Usuários", "Quem pode acessar o sistema e com qual perfil.") %}<a class="btn btn-primary" href="/usuarios/novo"><i class="bi bi-plus-lg"></i> Novo usuário</a>{% endcall %}
+<div class="card table-card anim-in">
+  <form method="get" class="filter-bar" data-autosubmit-form>
+    <div class="input-icon grow"><i class="bi bi-search"></i><input class="form-control" type="search" name="q" value="{{ f.get('q', '') }}" placeholder="Buscar por nome ou e-mail…" data-autosubmit autocomplete="off"></div>
+    <select class="form-select" name="perfil" data-autosubmit aria-label="Perfil"><option value="">Todos os perfis</option>{% for o in meta.perfis_usuario %}<option value="{{ o.valor }}" {{ 'selected' if f.get('perfil') == o.valor }}>{{ o.rotulo }}</option>{% endfor %}</select>
+    <select class="form-select" name="ativo" data-autosubmit aria-label="Situação"><option value="">Todos</option><option value="true" {{ 'selected' if f.get('ativo') == 'true' }}>Ativos</option><option value="false" {{ 'selected' if f.get('ativo') == 'false' }}>Inativos</option></select>
+  </form>
+  {% if res["items"] %}
+  <div class="table-responsive"><table class="table table-hover"><thead><tr><th>Usuário</th><th>Perfil</th><th>Situação</th><th>Último acesso</th><th class="text-end">Ações</th></tr></thead><tbody>
+  {% for u in res["items"] %}<tr style="--i:{{ loop.index0 }}">
+    <td><div class="d-flex align-items-center gap-3">{{ ui.avatar(u.nome) }}<div><span class="row-title">{{ u.nome }}</span>{% if u.id == user.id %} <span class="badge badge-soft">você</span>{% endif %}<div class="row-sub">{{ u.email }}</div></div></div></td>
+    <td><span class="badge badge-soft">{{ rot('perfis_usuario', u.perfil) }}</span></td>
+    <td>{% if u.ativo %}<span class="status-badge st-concluido">Ativo</span>{% else %}<span class="status-badge st-cancelado">Inativo</span>{% endif %}</td>
+    <td class="text-muted">{{ u.ultimo_login_em|ha }}</td>
+    <td class="text-end"><a class="btn btn-ghost btn-sm" href="/usuarios/{{ u.id }}/editar"><i class="bi bi-pencil"></i> Editar</a></td></tr>{% endfor %}
+  </tbody></table></div>{{ ui.pager(res) }}
+  {% else %}{{ ui.empty('bi-people', 'Nenhum usuário encontrado') }}{% endif %}
+</div>
+{% endblock %}

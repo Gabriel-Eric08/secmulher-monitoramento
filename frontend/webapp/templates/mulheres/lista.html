@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui with context %}
+{% block title %}Mulheres{% endblock %}
+{% block content %}
+{% call ui.header("Mulheres", "Todas as mulheres atendidas pela Secretaria.") %}
+  {% if can.escrita %}<a class="btn btn-primary" href="/mulheres/nova"><i class="bi bi-plus-lg"></i> Nova mulher</a>{% endif %}
+{% endcall %}
+
+<div class="row g-3 mb-4">
+  {% set stats = [
+    ('Mulheres cadastradas', cards.total, 'bi-people', ''),
+    ('Solicitados', cards.SOLICITADO, 'bi-inbox', 'SOLICITADO'),
+    ('Em análise', cards.EM_ANALISE, 'bi-search', 'EM_ANALISE'),
+    ('Em atendimento', cards.EM_ATENDIMENTO, 'bi-heart-pulse', 'EM_ATENDIMENTO')] %}
+  {% for label, valor, icone, st in stats %}
+  <div class="col-6 col-xl-3 anim-in" style="--i:{{ loop.index0 }}">
+    <a class="card stat-card card-hover d-block" href="{{ '/vinculos?status=' ~ st if st else '/mulheres' }}" style="color:inherit">
+      <div class="stat-label">{{ label }}</div>
+      <i class="bi {{ icone }} stat-icon"></i>
+      <div class="stat-value" data-count="{{ valor }}">{{ valor }}</div>
+    </a>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="card table-card anim-in" style="--i:4">
+  <form method="get" class="filter-bar" data-autosubmit-form>
+    <div class="input-icon grow"><i class="bi bi-search"></i>
+      <input class="form-control" type="search" name="q" value="{{ f.get('q', '') }}" placeholder="Buscar por nome ou CPF…" data-autosubmit autocomplete="off"></div>
+    <input class="form-control" type="text" name="cidade" value="{{ f.get('cidade', '') }}" placeholder="Cidade" data-autosubmit style="max-width:170px">
+    <select class="form-select" name="servico_id" data-autosubmit aria-label="Serviço">
+      <option value="">Todos os serviços</option>
+      {% for s in servicos %}<option value="{{ s.id }}" {{ 'selected' if f.get('servico_id') == s.id }}>{{ s.nome }}</option>{% endfor %}
+    </select>
+    <select class="form-select" name="status" data-autosubmit aria-label="Status">
+      <option value="">Qualquer status</option>
+      {% for o in meta.status_servico_mulher %}<option value="{{ o.valor }}" {{ 'selected' if f.get('status') == o.valor }}>{{ o.rotulo }}</option>{% endfor %}
+    </select>
+    {% if can.gestao %}
+    <div class="form-check form-switch mb-0 ms-1"><input class="form-check-input" type="checkbox" role="switch" id="inc" name="incluir_excluidas" value="true" {{ 'checked' if f.get('incluir_excluidas') == 'true' }} data-autosubmit><label class="form-check-label small" for="inc">Excluídas</label></div>
+    {% endif %}
+    {% if f.get('q') or f.get('cidade') or f.get('servico_id') or f.get('status') or f.get('incluir_excluidas') %}
+    <a class="btn btn-ghost btn-sm" href="/mulheres"><i class="bi bi-x-lg"></i> Limpar</a>{% endif %}
+  </form>
+
+  {% if res["items"] %}
+  <div class="table-responsive">
+    <table class="table table-hover">
+      <thead><tr>
+        <th>{{ ui.th_sort('nome_completo', 'Nome', f.get('sort', 'nome_completo')) }}</th>
+        <th>CPF</th><th>Telefone</th>
+        <th>{{ ui.th_sort('cidade', 'Cidade', f.get('sort')) }}</th>
+        <th>{{ ui.th_sort('created_at', 'Cadastro', f.get('sort')) }}</th>
+        <th class="text-end">Ações</th>
+      </tr></thead>
+      <tbody>
+      {% for m in res["items"] %}
+        <tr style="--i:{{ loop.index0 }}" data-href="/mulheres/{{ m.id }}">
+          <td><div class="d-flex align-items-center gap-3">{{ ui.avatar(m.nome_completo) }}
+            <div><a class="row-title" href="/mulheres/{{ m.id }}">{{ m.nome_completo }}</a>
+              {% if m.nome_social %}<div class="row-sub">Nome social: {{ m.nome_social }}</div>{% endif %}
+              {% if m.deleted_at %}<span class="badge badge-outline mt-1"><i class="bi bi-trash3"></i> Excluída</span>{% endif %}</div></div></td>
+          <td class="mono">{{ m.cpf_mascarado|vazio }}</td>
+          <td class="text-muted">{{ m.telefone_mascarado|vazio }}</td>
+          <td>{{ m.cidade|vazio }}{% if m.uf %}<span class="text-muted"> / {{ m.uf }}</span>{% endif %}</td>
+          <td class="text-muted" title="{{ m.created_at|dt }}">{{ m.created_at|dia }}</td>
+          <td class="text-end text-nowrap">
+            <a class="btn btn-ghost btn-icon" href="/mulheres/{{ m.id }}" data-bs-toggle="tooltip" title="Abrir"><i class="bi bi-eye"></i></a>
+            {% if can.escrita and not m.deleted_at %}<a class="btn btn-ghost btn-icon" href="/mulheres/{{ m.id }}/editar" data-bs-toggle="tooltip" title="Editar"><i class="bi bi-pencil"></i></a>{% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {{ ui.pager(res) }}
+  {% else %}
+    {% call ui.empty('bi-person-heart', 'Nenhuma mulher encontrada', 'Ajuste os filtros da busca ou cadastre uma nova mulher.') %}
+      {% if can.escrita %}<a class="btn btn-primary" href="/mulheres/nova"><i class="bi bi-plus-lg"></i> Nova mulher</a>{% endif %}
+    {% endcall %}
+  {% endif %}
+</div>
+{% endblock %}

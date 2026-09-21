@@ -1,0 +1,22 @@
+{# variáveis: action, catalogo, next #}
+<div class="modal fade" id="mVincular" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered"><form class="modal-content" method="post" action="{{ action }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf }}"><input type="hidden" name="next" value="{{ next }}">
+    <div class="modal-header flex-column align-items-start">
+      <div class="modal-icon"><i class="bi bi-diagram-3"></i></div>
+      <h2 class="modal-title">Vincular serviço</h2>
+      <p class="text-muted small mb-0">O atendimento começa como <strong>Solicitado</strong>.</p>
+    </div>
+    <div class="modal-body">
+      {% if catalogo %}
+      <div class="mb-3"><label class="form-label" for="mv_s">Serviço<span class="req">*</span></label>
+        <select class="form-select" id="mv_s" name="servico_id" required><option value="" disabled selected>Escolha um serviço…</option>
+          {% for s in catalogo %}<option value="{{ s.id }}">{{ s.nome }}{% if s.categoria %} — {{ s.categoria }}{% endif %}</option>{% endfor %}</select></div>
+      <div class="mb-3"><label class="form-label" for="mv_i">Data de início</label><input class="form-control" id="mv_i" type="date" name="data_inicio"><div class="form-text">Vazio = hoje.</div></div>
+      <div class="mb-3"><label class="form-label" for="mv_o">Observações</label><textarea class="form-control" id="mv_o" name="observacoes" rows="2" maxlength="5000"></textarea></div>
+      <div class="form-check"><input class="form-check-input" type="checkbox" name="assumir" value="1" id="mv_a" checked><label class="form-check-label" for="mv_a">Sou o(a) responsável por este atendimento</label></div>
+      {% else %}<div class="alert alert-warn mb-0">Não há serviços ativos no catálogo. {% if can.gestao %}<a href="/servicos/novo">Cadastre um serviço</a>.{% endif %}</div>{% endif %}
+    </div>
+    <div class="modal-footer"><button type="button" class="btn btn-outline" data-bs-dismiss="modal">Cancelar</button>{% if catalogo %}<button type="submit" class="btn btn-primary"><i class="bi bi-check2"></i> Vincular</button>{% endif %}</div>
+  </form></div>
+</div>

@@ -1,0 +1,16 @@
+<div class="modal fade" id="mVinculoEditar" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered"><form class="modal-content" method="post" data-modal-form>
+    <input type="hidden" name="csrf_token" value="{{ csrf }}"><input type="hidden" name="next" value="">
+    <div class="modal-header flex-column align-items-start">
+      <div class="modal-icon"><i class="bi bi-pencil"></i></div>
+      <h2 class="modal-title">Editar atendimento</h2>
+      <p class="text-muted small mb-0" data-text="alvo"></p>
+    </div>
+    <div class="modal-body">
+      <div class="mb-3"><label class="form-label" for="mve_ini">Data de início</label><input class="form-control" id="mve_ini" type="date" name="data_inicio"></div>
+      <div class="mb-3"><label class="form-label" for="mve_obs">Observações</label><textarea class="form-control" id="mve_obs" name="observacoes" rows="3" maxlength="5000"></textarea></div>
+      <div class="form-check"><input class="form-check-input" type="checkbox" name="assumir" value="1" id="mve_ass"><label class="form-check-label" for="mve_ass">Assumir como responsável <span class="text-muted">(hoje: <span data-text="responsavel">—</span>)</span></label></div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn btn-outline" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary"><i class="bi bi-check2"></i> Salvar</button></div>
+  </form></div>
+</div>

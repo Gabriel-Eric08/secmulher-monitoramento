@@ -1,0 +1,22 @@
+{# variáveis: action, vinculos (lista), next #}
+<div class="modal fade" id="mEvento" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg"><form class="modal-content" method="post" action="{{ action }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf }}"><input type="hidden" name="next" value="{{ next|default('') }}">
+    <div class="modal-header flex-column align-items-start">
+      <div class="modal-icon"><i class="bi bi-clock-history"></i></div>
+      <h2 class="modal-title">Registrar evento</h2>
+      <p class="text-muted small mb-0">Fica na linha do tempo e não pode ser editado depois (só retificado).</p>
+    </div>
+    <div class="modal-body"><div class="row g-3">
+      <div class="col-md-5"><label class="form-label" for="me_tipo">Tipo<span class="req">*</span></label>
+        <select class="form-select" id="me_tipo" name="tipo" required>{% for o in meta.tipos_evento_manuais %}<option value="{{ o.valor }}">{{ o.rotulo }}</option>{% endfor %}</select></div>
+      <div class="col-md-7"><label class="form-label" for="me_quando">Quando aconteceu</label>
+        <input class="form-control" id="me_quando" type="datetime-local" name="ocorrido_em" data-now="default"><div class="form-text">Pode ser retroativo, nunca futuro.</div></div>
+      <div class="col-12"><label class="form-label" for="me_titulo">Título<span class="req">*</span></label><input class="form-control" id="me_titulo" name="titulo" required minlength="3" maxlength="200" placeholder="Ex.: Visita domiciliar"></div>
+      <div class="col-12"><label class="form-label" for="me_desc">Descrição</label><textarea class="form-control" id="me_desc" name="descricao" rows="4" maxlength="10000"></textarea></div>
+      {% if vinculos %}<div class="col-12"><label class="form-label" for="me_v">Relacionado a um atendimento <span class="text-muted fw-normal">(opcional)</span></label>
+        <select class="form-select" id="me_v" name="servico_mulher_id"><option value="">— Nenhum —</option>{% for v in vinculos %}<option value="{{ v.id }}">{{ v.servico.nome }} · {{ rot('status_servico_mulher', v.status) }}</option>{% endfor %}</select></div>{% endif %}
+    </div></div>
+    <div class="modal-footer"><button type="button" class="btn btn-outline" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary"><i class="bi bi-check2"></i> Registrar</button></div>
+  </form></div>
+</div>

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui with context %}
+{% set criar = modo == 'criar' %}
+{% block title %}{{ 'Nova mulher' if criar else 'Editar cadastro' }}{% endblock %}
+{% block content %}
+{% call ui.header('Nova mulher' if criar else 'Editar cadastro', 'Preencha os dados da mulher atendida. Campos com * são obrigatórios.' if criar else mulher.nome_completo,
+   crumbs=[('/mulheres', 'Mulheres'), (none, 'Novo cadastro' if criar else 'Editar')]) %}{% endcall %}
+
+<form method="post" novalidate class="card anim-in" autocomplete="off">
+  <div class="card-body px-4">
+    {{ ui.csrf() }}
+    {% if erros %}<div class="alert alert-err d-flex gap-2"><i class="bi bi-exclamation-octagon-fill"></i><div>Corrija os campos destacados para continuar.</div></div>{% endif %}
+
+    <section class="form-section">
+      <div><h3>Dados pessoais</h3><p>Identificação da mulher. Se usar nome social, informe-o também.</p></div>
+      <div class="row g-3">
+        {{ ui.field('nome_completo', 'Nome completo', form, erros, required=True, cols='col-md-8', autofocus=True, maxlength=200) }}
+        {{ ui.field('nome_social', 'Nome social', form, erros, cols='col-md-4', maxlength=200) }}
+        {{ ui.field('cpf', 'CPF', form, erros, mask='cpf', placeholder='000.000.000-00', cols='col-md-4', hint='Único no sistema.') }}
+        {{ ui.field('rg', 'RG', form, erros, cols='col-md-4', maxlength=30) }}
+        {{ ui.field('data_nascimento', 'Data de nascimento', form, erros, type='date', cols='col-md-4') }}
+      </div>
+    </section>
+
+    <section class="form-section">
+      <div><h3>Contato</h3><p>Como falar com a mulher.</p></div>
+      <div class="row g-3">
+        {{ ui.field('telefone', 'Telefone', form, erros, mask='tel', placeholder='(00) 00000-0000', cols='col-md-4') }}
+        {{ ui.field('telefone_alt', 'Telefone alternativo', form, erros, mask='tel', placeholder='(00) 00000-0000', cols='col-md-4') }}
+        {{ ui.field('email', 'E-mail', form, erros, type='email', placeholder='nome@exemplo.com', cols='col-md-4') }}
+      </div>
+    </section>
+
+    <section class="form-section">
+      <div><h3>Endereço</h3><p>Onde a mulher mora atualmente.</p></div>
+      <div class="row g-3">
+        {{ ui.field('cep', 'CEP', form, erros, mask='cep', placeholder='00000-000', cols='col-md-3') }}
+        {{ ui.field('logradouro', 'Logradouro', form, erros, cols='col-md-6', maxlength=200) }}
+        {{ ui.field('numero', 'Número', form, erros, cols='col-md-3', maxlength=20) }}
+        {{ ui.field('complemento', 'Complemento', form, erros, cols='col-md-4', maxlength=100) }}
+        {{ ui.field('bairro', 'Bairro', form, erros, cols='col-md-4', maxlength=100) }}
+        {{ ui.field('cidade', 'Cidade', form, erros, cols='col-md-3', maxlength=100) }}
+        {{ ui.field('uf', 'UF', form, erros, mask='uf', placeholder='SP', cols='col-md-1') }}
+      </div>
+    </section>
+
+    <section class="form-section">
+      <div><h3>Observações</h3><p>Informações úteis para quem for atender. Evite dados desnecessários.</p></div>
+      <div>{{ ui.field('observacoes', 'Observações', form, erros, type='textarea', maxlength=5000) }}</div>
+    </section>
+  </div>
+  <div class="card-header border-top border-bottom-0 justify-content-end gap-2">
+    <a class="btn btn-outline" href="{{ '/mulheres' if criar else '/mulheres/' ~ mulher.id }}">Cancelar</a>
+    <button class="btn btn-primary" type="submit"><i class="bi bi-check2"></i> {{ 'Cadastrar' if criar else 'Salvar alterações' }}</button>
+  </div>
+</form>
+{% endblock %}

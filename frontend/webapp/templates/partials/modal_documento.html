@@ -1,0 +1,23 @@
+{# variáveis: action, vinculos #}
+<div class="modal fade" id="mDocumento" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg"><form class="modal-content" method="post" action="{{ action }}" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf }}">
+    <div class="modal-header flex-column align-items-start">
+      <div class="modal-icon"><i class="bi bi-cloud-arrow-up"></i></div>
+      <h2 class="modal-title">Enviar documento</h2>
+      <p class="text-muted small mb-0">Cria o documento com a versão 1. Novas versões nunca sobrescrevem as anteriores.</p>
+    </div>
+    <div class="modal-body"><div class="row g-3">
+      <div class="col-12">{% from "_macros.html" import dropzone with context %}{{ dropzone() }}</div>
+      <div class="col-md-8"><label class="form-label" for="md_t">Título<span class="req">*</span></label><input class="form-control" id="md_t" name="titulo" required minlength="3" maxlength="200" placeholder="Ex.: Encaminhamento"></div>
+      <div class="col-md-4"><label class="form-label" for="md_tipo">Tipo<span class="req">*</span></label>
+        <select class="form-select" id="md_tipo" name="tipo" required>{% for o in meta.tipos_documento %}<option value="{{ o.valor }}">{{ o.rotulo }}</option>{% endfor %}</select></div>
+      <div class="col-md-6"><label class="form-label" for="md_de">Válido de</label><input class="form-control" id="md_de" type="date" name="valido_de"></div>
+      <div class="col-md-6"><label class="form-label" for="md_ate">Válido até</label><input class="form-control" id="md_ate" type="date" name="valido_ate"></div>
+      {% if vinculos %}<div class="col-12"><label class="form-label" for="md_v">Relacionado a um atendimento <span class="text-muted fw-normal">(opcional)</span></label>
+        <select class="form-select" id="md_v" name="servico_mulher_id"><option value="">— Nenhum —</option>{% for v in vinculos %}<option value="{{ v.id }}">{{ v.servico.nome }}</option>{% endfor %}</select></div>{% endif %}
+      <div class="col-12"><label class="form-label" for="md_d">Descrição</label><textarea class="form-control" id="md_d" name="descricao" rows="2" maxlength="5000"></textarea></div>
+    </div></div>
+    <div class="modal-footer"><button type="button" class="btn btn-outline" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary"><i class="bi bi-cloud-arrow-up"></i> Enviar</button></div>
+  </form></div>
+</div>

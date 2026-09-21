@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui with context %}
+{% block title %}{{ mulher.nome_completo }}{% endblock %}
+{% block content %}
+{% set base = '/mulheres/' ~ mulher.id %}
+{% set servicos = resumo.servicos %}
+<div class="crumbs"><a href="/mulheres">Mulheres</a><i class="bi bi-chevron-right" style="font-size:.6rem"></i><span>{{ mulher.nome_completo }}</span></div>
+
+<div class="page-header anim-in">
+  <div class="d-flex align-items-center gap-3">
+    <span class="avatar avatar-lg">{{ mulher.nome_completo|iniciais }}</span>
+    <div>
+      <h1 class="page-title">{{ mulher.nome_completo }}</h1>
+      <p class="page-sub">
+        {% if mulher.nome_social %}Nome social: <strong>{{ mulher.nome_social }}</strong> · {% endif %}
+        {% if mulher.cpf %}CPF <span class="mono">{{ mulher.cpf|cpf }}</span> · {% endif %}
+        Cadastrada em {{ mulher.created_at|dia }}
+      </p>
+    </div>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    {% if can.escrita %}
+      <button class="btn btn-outline" type="button" data-bs-toggle="modal" data-bs-target="#mEvento"><i class="bi bi-clock-history"></i> Novo evento</button>
+      <button class="btn btn-outline" type="button" data-bs-toggle="modal" data-bs-target="#mVincular"><i class="bi bi-diagram-3"></i> Vincular serviço</button>
+      <a class="btn btn-primary" href="{{ base }}/editar"><i class="bi bi-pencil"></i> Editar</a>
+    {% endif %}
+    {% if can.gestao %}
+    <div class="dropdown"><button class="btn btn-outline btn-icon" data-bs-toggle="dropdown" aria-label="Mais ações" type="button"><i class="bi bi-three-dots"></i></button>
+      <ul class="dropdown-menu dropdown-menu-end"><li>
+        <form method="post" action="{{ base }}/excluir" data-confirm="O cadastro deixará de aparecer nas listas e não aceitará novos registros. O histórico é preservado e pode ser restaurado." data-confirm-title="Excluir cadastro?" data-confirm-label="Excluir cadastro" data-confirm-danger data-prompt="motivo" data-prompt-label="Motivo da exclusão">
+          {{ ui.csrf() }}<button class="dropdown-item text-danger" type="submit"><i class="bi bi-trash3"></i> Excluir cadastro</button></form></li></ul></div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="tabs-list mb-4 anim-in" style="--i:1" role="tablist">
+  <a class="tab-link {{ 'active' if aba == 'visao' }}" href="{{ base }}?aba=visao" role="tab"><i class="bi bi-person-lines-fill"></i> Visão geral</a>
+  <a class="tab-link {{ 'active' if aba == 'servicos' }}" href="{{ base }}?aba=servicos" role="tab"><i class="bi bi-diagram-3"></i> Serviços <span class="count">{{ servicos|length }}</span></a>
+  <a class="tab-link {{ 'active' if aba == 'linha' }}" href="{{ base }}?aba=linha" role="tab"><i class="bi bi-clock-history"></i> Linha do tempo <span class="count">{{ resumo.total_eventos }}</span></a>
+  <a class="tab-link {{ 'active' if aba == 'documentos' }}" href="{{ base }}?aba=documentos" role="tab"><i class="bi bi-folder2-open"></i> Documentos <span class="count">{{ resumo.total_documentos }}</span></a>
+</div>
+
+<div class="tab-panel" role="tabpanel">
+{# ===================== VISÃO GERAL ===================== #}
+{% if aba == 'visao' %}
+<div class="row g-4">
+  <div class="col-lg-5">
+    <div class="card mb-4"><div class="card-header"><h2 class="card-title">Dados pessoais</h2></div>
+      <div class="card-body"><dl class="kv">
+        <dt>Nome completo</dt><dd>{{ mulher.nome_completo }}</dd>
+        <dt>Nome social</dt><dd>{{ mulher.nome_social|vazio }}</dd>
+        <dt>CPF</dt><dd class="mono">{{ mulher.cpf|cpf }}</dd>
+        <dt>RG</dt><dd>{{ mulher.rg|vazio }}</dd>
+        <dt>Nascimento</dt><dd>{{ mulher.data_nascimento|dia }}</dd>
+      </dl></div></div>
+    <div class="card mb-4"><div class="card-header"><h2 class="card-title">Contato</h2></div>
+      <div class="card-body"><dl class="kv">
+        <dt>Telefone</dt><dd>{{ mulher.telefone|vazio }}</dd>
+        <dt>Alternativo</dt><dd>{{ mulher.telefone_alt|vazio }}</dd>
+        <dt>E-mail</dt><dd>{% if mulher.email %}<a href="mailto:{{ mulher.email }}">{{ mulher.email }}</a>{% else %}—{% endif %}</dd>
+      </dl></div></div>
+    <div class="card"><div class="card-header"><h2 class="card-title">Endereço</h2></div>
+      <div class="card-body"><dl class="kv">
+        <dt>Logradouro</dt><dd>{{ mulher.logradouro|vazio }}{% if mulher.numero %}, {{ mulher.numero }}{% endif %}{% if mulher.complemento %} — {{ mulher.complemento }}{% endif %}</dd>
+        <dt>Bairro</dt><dd>{{ mulher.bairro|vazio }}</dd>
+        <dt>Cidade / UF</dt><dd>{{ mulher.cidade|vazio }}{% if mulher.uf %} / {{ mulher.uf }}{% endif %}</dd>
+        <dt>CEP</dt><dd>{{ mulher.cep|cep }}</dd>
+        {% if mulher.observacoes %}<dt>Observações</dt><dd style="white-space:pre-line">{{ mulher.observacoes }}</dd>{% endif %}
+      </dl></div></div>
+  </div>
+  <div class="col-lg-7">
+    <div class="card mb-4"><div class="card-header"><h2 class="card-title">Serviços</h2><a class="btn btn-ghost btn-sm" href="{{ base }}?aba=servicos">Ver todos <i class="bi bi-arrow-right"></i></a></div>
+      {% if servicos %}<ul class="list-group list-group-flush">
+        {% for v in servicos[:5] %}<li class="list-group-item d-flex align-items-center justify-content-between gap-3 px-4 py-3">
+          <div><a class="row-title" href="/vinculos/{{ v.id }}">{{ v.servico.nome }}</a><div class="row-sub">Desde {{ v.data_inicio|dia }}{% if v.responsavel %} · {{ v.responsavel.nome }}{% endif %}</div></div>
+          <div class="d-flex align-items-center gap-2">{{ ui.status(v.status) }}{{ ui.btn_status(v, base ~ '?aba=visao', 'btn btn-soft btn-sm') }}</div></li>{% endfor %}
+      </ul>
+      {% else %}{% call ui.empty('bi-diagram-3', 'Nenhum serviço vinculado', 'Vincule um serviço para começar o acompanhamento.') %}
+        {% if can.escrita %}<button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#mVincular"><i class="bi bi-plus-lg"></i> Vincular serviço</button>{% endif %}{% endcall %}{% endif %}
+    </div>
+    <div class="card"><div class="card-header"><h2 class="card-title">Últimos eventos</h2><a class="btn btn-ghost btn-sm" href="{{ base }}?aba=linha">Linha do tempo completa <i class="bi bi-arrow-right"></i></a></div>
+      <div class="card-body">
+        {% if resumo.ultimos_eventos %}<ul class="timeline">{% for e in resumo.ultimos_eventos %}{{ ui.evento_item(e, loop.index0, base ~ '?aba=visao') }}{% endfor %}</ul>
+        {% else %}{{ ui.empty('bi-clock-history', 'Ainda não há eventos', 'Os registros do atendimento aparecerão aqui.') }}{% endif %}
+      </div></div>
+  </div>
+</div>
+
+{# ===================== SERVIÇOS ===================== #}
+{% elif aba == 'servicos' %}
+<div class="card table-card">
+  <div class="card-header"><h2 class="card-title">Serviços vinculados</h2>
+    {% if can.escrita %}<button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#mVincular"><i class="bi bi-plus-lg"></i> Vincular serviço</button>{% endif %}</div>
+  {% if servicos %}
+  <div class="table-responsive"><table class="table table-hover"><thead><tr><th>Serviço</th><th>Status</th><th>Responsável</th><th>Início</th><th>Encerramento</th><th class="text-end">Ações</th></tr></thead><tbody>
+    {% for v in servicos %}<tr style="--i:{{ loop.index0 }}" data-href="/vinculos/{{ v.id }}">
+      <td><a class="row-title" href="/vinculos/{{ v.id }}">{{ v.servico.nome }}</a>{% if v.servico.categoria %}<div class="row-sub">{{ v.servico.categoria }}</div>{% endif %}</td>
+      <td>{{ ui.status(v.status) }}</td>
+      <td>{{ v.responsavel.nome if v.responsavel else '—' }}</td>
+      <td>{{ v.data_inicio|dia }}</td><td>{{ v.data_encerramento|dia }}</td>
+      <td class="text-end text-nowrap">{{ ui.btn_status(v, base ~ '?aba=servicos') }}
+        {% if can.escrita %}<button class="btn btn-ghost btn-icon" type="button" data-bs-toggle="modal" data-bs-target="#mVinculoEditar" title="Editar"
+          data-modal-action="/vinculos/{{ v.id }}/editar" data-modal-fields='{{ {"next": base ~ "?aba=servicos", "data_inicio": v.data_inicio, "observacoes": v.observacoes or ""}|tojson }}'
+          data-modal-texts='{{ {"alvo": v.servico.nome, "responsavel": v.responsavel.nome if v.responsavel else "ninguém"}|tojson }}'><i class="bi bi-pencil"></i></button>{% endif %}
+        <a class="btn btn-ghost btn-icon" href="/vinculos/{{ v.id }}" title="Abrir"><i class="bi bi-box-arrow-up-right"></i></a></td></tr>{% endfor %}
+  </tbody></table></div>
+  {% else %}{{ ui.empty('bi-diagram-3', 'Nenhum serviço vinculado', 'Vincule um serviço do catálogo a esta mulher.') }}{% endif %}
+</div>
+
+{# ===================== LINHA DO TEMPO ===================== #}
+{% elif aba == 'linha' %}
+<div class="card">
+  <form method="get" class="filter-bar" data-autosubmit-form>
+    <input type="hidden" name="aba" value="linha">
+    <select class="form-select" name="tipo" data-autosubmit aria-label="Tipo"><option value="">Todos os tipos</option>{% for o in meta.tipos_evento %}<option value="{{ o.valor }}" {{ 'selected' if f.get('tipo') == o.valor }}>{{ o.rotulo }}</option>{% endfor %}</select>
+    <select class="form-select" name="servico_mulher_id" data-autosubmit aria-label="Atendimento"><option value="">Todos os atendimentos</option>{% for v in servicos %}<option value="{{ v.id }}" {{ 'selected' if f.get('servico_mulher_id') == v.id }}>{{ v.servico.nome }}</option>{% endfor %}</select>
+    <div class="ms-auto d-flex gap-2">
+      {% if f.get('tipo') or f.get('servico_mulher_id') %}<a class="btn btn-ghost btn-sm" href="{{ base }}?aba=linha"><i class="bi bi-x-lg"></i> Limpar</a>{% endif %}
+      {% if can.escrita %}<button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#mEvento"><i class="bi bi-plus-lg"></i> Novo evento</button>{% endif %}</div>
+  </form>
+  <div class="card-body">
+    {% if linha["items"] %}
+      <ul class="timeline">{% for e in linha["items"] %}{{ ui.evento_item(e, loop.index0, request.url.path ~ qs()) }}{% endfor %}</ul>
+    {% else %}{{ ui.empty('bi-clock-history', 'Nenhum evento encontrado', 'Registre atendimentos, contatos, visitas e outros fatos.') }}{% endif %}
+  </div>
+  {{ ui.pager(linha) }}
+</div>
+
+{# ===================== DOCUMENTOS ===================== #}
+{% elif aba == 'documentos' %}
+<div class="card">
+  <form method="get" class="filter-bar" data-autosubmit-form>
+    <input type="hidden" name="aba" value="documentos">
+    <div class="input-icon grow"><i class="bi bi-search"></i><input class="form-control" type="search" name="q" value="{{ f.get('q', '') }}" placeholder="Buscar pelo título…" data-autosubmit autocomplete="off"></div>
+    {% if can.escrita %}<button class="btn btn-primary btn-sm ms-auto" type="button" data-bs-toggle="modal" data-bs-target="#mDocumento"><i class="bi bi-cloud-arrow-up"></i> Enviar documento</button>{% endif %}
+  </form>
+  <div class="card-body">
+    {% if docs["items"] %}
+    <div class="row g-3">{% for d in docs["items"] %}
+      <div class="col-md-6 col-xl-4 anim-in" style="--i:{{ loop.index0 }}">
+        <a class="card card-hover doc-card" href="/documentos/{{ d.id }}">
+          <span class="file-icon"><i class="bi {{ 'bi-file-earmark-pdf' if d.versao and d.versao.mime_type == 'application/pdf' else 'bi-file-earmark-image' if d.versao and d.versao.mime_type.startswith('image') else 'bi-file-earmark-text' }}"></i></span>
+          <div class="min-w-0"><div class="row-title text-truncate">{{ d.titulo }}</div>
+            <div class="row-sub">{{ rot('tipos_documento', d.tipo) }} · v{{ d.versao_atual }}{% if d.versao %} · {{ d.versao.tamanho_bytes|tamanho }}{% endif %}</div>
+            <div class="row-sub">Enviado {{ d.updated_at|ha }}</div></div></a></div>{% endfor %}</div>
+    {% else %}{{ ui.empty('bi-folder2-open', 'Nenhum documento', 'Envie encaminhamentos, laudos, comprovantes e outros arquivos.') }}{% endif %}
+  </div>
+  {{ ui.pager(docs) }}
+</div>
+{% endif %}
+</div>
+
+{% if can.escrita %}
+  {% include "partials/modal_status.html" %}
+  {% include "partials/modal_vinculo_editar.html" %}
+  {% include "partials/modal_retificar.html" %}
+  {% with action = base ~ '/servicos', catalogo = catalogo, next = base ~ '?aba=servicos' %}{% include "partials/modal_vincular.html" %}{% endwith %}
+  {% with action = base ~ '/eventos', vinculos = servicos %}{% include "partials/modal_evento.html" %}{% endwith %}
+  {% with action = base ~ '/documentos', vinculos = servicos %}{% include "partials/modal_documento.html" %}{% endwith %}
+{% endif %}
+{% endblock %}

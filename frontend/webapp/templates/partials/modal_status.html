@@ -1,0 +1,20 @@
+<div class="modal fade" id="mStatus" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered"><form class="modal-content" method="post" data-modal-form>
+    <input type="hidden" name="csrf_token" value="{{ csrf }}"><input type="hidden" name="next" value="">
+    <div class="modal-header flex-column align-items-start">
+      <div class="modal-icon"><i class="bi bi-arrow-left-right"></i></div>
+      <h2 class="modal-title">Mudar status</h2>
+      <p class="text-muted small mb-0" data-text="alvo"></p>
+    </div>
+    <div class="modal-body">
+      <p class="small mb-3">Status atual: <strong data-text="atual"></strong>. A mudança gera um evento na linha do tempo e é auditada.</p>
+      <div class="mb-3"><label class="form-label" for="ms_status">Novo status<span class="req">*</span></label>
+        <select class="form-select" id="ms_status" name="status_novo" required data-exige-motivo='{{ meta.status_exigem_motivo|tojson }}' data-motivo-target="#ms_motivo"></select></div>
+      <div class="mb-3"><label class="form-label" for="ms_motivo">Motivo <span class="req">*</span></label>
+        <textarea class="form-control" id="ms_motivo" name="motivo" rows="3" maxlength="2000" placeholder="Justifique a mudança (obrigatório para Suspenso e Cancelado)"></textarea></div>
+      <div><label class="form-label" for="ms_quando">Quando ocorreu <span class="text-muted fw-normal">(opcional)</span></label>
+        <input class="form-control" id="ms_quando" type="datetime-local" name="ocorrido_em" data-now="max"><div class="form-text">Deixe vazio para usar agora. Não pode ser futuro.</div></div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn btn-outline" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary"><i class="bi bi-check2"></i> Confirmar mudança</button></div>
+  </form></div>
+</div>

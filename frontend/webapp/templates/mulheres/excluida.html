@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui with context %}
+{% block title %}{{ mulher.nome_completo }}{% endblock %}
+{% block content %}
+{% call ui.header(mulher.nome_completo, crumbs=[('/mulheres', 'Mulheres'), (none, 'Cadastro excluído')]) %}{% endcall %}
+<div class="excluida-banner d-flex flex-wrap gap-3 align-items-center justify-content-between anim-in">
+  <div class="d-flex gap-3 align-items-start"><i class="bi bi-trash3 fs-4 text-danger"></i>
+    <div><strong>Este cadastro foi excluído em {{ mulher.deleted_at|dt }}.</strong>
+    <div class="text-muted">Motivo: {{ mulher.motivo_exclusao|vazio }}. O histórico (serviços, eventos e documentos) foi preservado.</div></div></div>
+  <form method="post" action="/mulheres/{{ mulher.id }}/restaurar">{{ ui.csrf() }}<button class="btn btn-primary" type="submit"><i class="bi bi-arrow-counterclockwise"></i> Restaurar cadastro</button></form>
+</div>
+{% endblock %}

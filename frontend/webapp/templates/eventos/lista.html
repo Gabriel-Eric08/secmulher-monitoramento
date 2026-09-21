@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui with context %}
+{% block title %}Eventos{% endblock %}
+{% block content %}
+{% call ui.header("Eventos", "Linha do tempo de todos os atendimentos. Registros imutáveis: correções viram retificações.") %}
+  {% if can.escrita %}<a class="btn btn-primary" href="/eventos/novo"><i class="bi bi-plus-lg"></i> Novo evento</a>{% endif %}
+{% endcall %}
+<div class="card anim-in">
+  <form method="get" class="filter-bar" data-autosubmit-form>
+    <select class="form-select" name="tipo" data-autosubmit aria-label="Tipo"><option value="">Todos os tipos</option>{% for o in meta.tipos_evento %}<option value="{{ o.valor }}" {{ 'selected' if f.get('tipo') == o.valor }}>{{ o.rotulo }}</option>{% endfor %}</select>
+    <div class="d-flex align-items-center gap-2"><span class="small text-muted">De</span><input class="form-control" type="date" name="de" value="{{ f.get('de', '') }}" data-autosubmit><span class="small text-muted">até</span><input class="form-control" type="date" name="ate" value="{{ f.get('ate', '') }}" data-autosubmit></div>
+    {% if f.get('mulher_id') %}<span class="chip">Filtrando por uma mulher <a href="{{ qs(mulher_id=None) }}" aria-label="Remover filtro"><i class="bi bi-x"></i></a></span><input type="hidden" name="mulher_id" value="{{ f.get('mulher_id') }}">{% endif %}
+    {% if f.get('tipo') or f.get('de') or f.get('ate') or f.get('mulher_id') %}<a class="btn btn-ghost btn-sm" href="/eventos"><i class="bi bi-x-lg"></i> Limpar</a>{% endif %}
+  </form>
+  <div class="card-body">
+    {% if res["items"] %}<ul class="timeline">{% for e in res["items"] %}{{ ui.evento_item(e, loop.index0, request.url.path ~ qs(), mostrar_mulher=True) }}{% endfor %}</ul>
+    {% else %}{% call ui.empty('bi-clock-history', 'Nenhum evento encontrado', 'Ajuste os filtros ou registre um novo evento.') %}{% if can.escrita %}<a class="btn btn-primary" href="/eventos/novo"><i class="bi bi-plus-lg"></i> Novo evento</a>{% endif %}{% endcall %}{% endif %}
+  </div>
+  {{ ui.pager(res) }}
+</div>
+{% if can.escrita %}{% include "partials/modal_retificar.html" %}{% endif %}
+{% endblock %}

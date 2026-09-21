@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui with context %}
+{% block title %}{{ doc.titulo }}{% endblock %}
+{% block content %}
+{% set aqui = '/documentos/' ~ doc.id %}
+{% call ui.header(doc.titulo, rot('tipos_documento', doc.tipo) ~ " · " ~ doc.mulher.nome_completo, crumbs=[('/documentos', 'Documentos'), (none, doc.titulo)]) %}
+  {% if not doc.deleted_at %}
+    <a class="btn btn-outline" href="{{ aqui }}/download"><i class="bi bi-download"></i> Baixar versão atual</a>
+    {% if can.escrita %}<button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#mVersao"><i class="bi bi-cloud-arrow-up"></i> Nova versão</button>
+    <button class="btn btn-outline btn-icon" type="button" data-bs-toggle="modal" data-bs-target="#mEditarDoc" aria-label="Editar metadados"><i class="bi bi-pencil"></i></button>{% endif %}
+    {% if can.gestao %}{{ ui.confirm_form(aqui ~ '/excluir', 'O documento sai das listas, mas todas as versões e arquivos são preservados e ele pode ser restaurado.', 'Excluir', 'btn btn-outline-danger', 'Excluir documento?') }}{% endif %}
+  {% elif can.gestao %}
+    <form method="post" action="{{ aqui }}/restaurar">{{ ui.csrf() }}<button class="btn btn-primary" type="submit"><i class="bi bi-arrow-counterclockwise"></i> Restaurar</button></form>
+  {% endif %}
+{% endcall %}
+{% if doc.deleted_at %}<div class="excluida-banner mb-4 d-flex gap-3 align-items-center"><i class="bi bi-trash3 fs-4 text-danger"></i><div><strong>Documento excluído em {{ doc.deleted_at|dt }}.</strong> As versões foram preservadas.</div></div>{% endif %}
+
+<div class="row g-4">
+  <div class="col-lg-4">
+    <div class="card anim-in"><div class="card-header"><h2 class="card-title">Informações</h2><span class="badge badge-soft">v{{ doc.versao_atual }} atual</span></div>
+      <div class="card-body"><dl class="kv" style="grid-template-columns:110px 1fr">
+        <dt>Mulher</dt><dd><a href="/mulheres/{{ doc.mulher.id }}?aba=documentos">{{ doc.mulher.nome_completo }}</a></dd>
+        <dt>Tipo</dt><dd>{{ rot('tipos_documento', doc.tipo) }}</dd>
+        {% if doc.servico_mulher_id %}<dt>Atendimento</dt><dd><a href="/vinculos/{{ doc.servico_mulher_id }}">Abrir atendimento</a></dd>{% endif %}
+        <dt>Criado em</dt><dd>{{ doc.created_at|dt }}</dd><dt>Atualizado</dt><dd>{{ doc.updated_at|dt }}</dd>
+        {% if doc.descricao %}<dt>Descrição</dt><dd style="white-space:pre-line">{{ doc.descricao }}</dd>{% endif %}
+      </dl></div></div>
+  </div>
+  <div class="col-lg-8">
+    <div class="card table-card anim-in" style="--i:1"><div class="card-header"><h2 class="card-title">Histórico de versões</h2><span class="badge badge-outline">{{ versoes|length }}</span></div>
+      <div class="table-responsive"><table class="table table-hover"><thead><tr><th>Versão</th><th>Arquivo</th><th>Validade</th><th>Motivo</th><th>Enviado</th><th class="text-end">Baixar</th></tr></thead><tbody>
+      {% for v in versoes %}<tr style="--i:{{ loop.index0 }}">
+        <td><strong>v{{ v.numero }}</strong>{% if v.numero == doc.versao_atual %} <span class="badge badge-soft">atual</span>{% endif %}</td>
+        <td><div class="text-truncate" style="max-width:220px" title="{{ v.nome_arquivo }}">{{ v.nome_arquivo }}</div><div class="row-sub">{{ v.tamanho_bytes|tamanho }} · {{ v.mime_type.split('/')[-1] }}</div><div class="row-sub mono text-truncate" style="max-width:220px" title="SHA-256 {{ v.sha256 }}">{{ v.sha256[:16] }}…</div></td>
+        <td class="text-muted">{% if v.valido_de or v.valido_ate %}{{ v.valido_de|dia }} → {{ v.valido_ate|dia }}{% else %}—{% endif %}</td>
+        <td class="text-muted">{{ v.motivo|vazio }}</td><td class="text-muted">{{ v.created_at|dt }}</td>
+        <td class="text-end"><a class="btn btn-outline btn-sm" href="{{ aqui }}/versoes/{{ v.numero }}/download"><i class="bi bi-download"></i></a></td></tr>{% endfor %}
+      </tbody></table></div></div>
+  </div>
+</div>
+
+{% if can.escrita and not doc.deleted_at %}
+<div class="modal fade" id="mVersao" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><form class="modal-content" method="post" action="{{ aqui }}/versoes" enctype="multipart/form-data">
+  <input type="hidden" name="csrf_token" value="{{ csrf }}">
+  <div class="modal-header flex-column align-items-start"><div class="modal-icon"><i class="bi bi-cloud-arrow-up"></i></div><h2 class="modal-title">Enviar nova versão</h2><p class="text-muted small mb-0">A versão atual (v{{ doc.versao_atual }}) continua disponível para download.</p></div>
+  <div class="modal-body"><div class="mb-3">{{ ui.dropzone() }}</div>
+    <div class="mb-3"><label class="form-label" for="v_motivo">Motivo da nova versão<span class="req">*</span></label><input class="form-control" id="v_motivo" name="motivo" required minlength="3" maxlength="500" placeholder="Ex.: Renovação do encaminhamento"></div>
+    <div class="row g-3"><div class="col-6"><label class="form-label" for="v_de">Válido de</label><input class="form-control" id="v_de" type="date" name="valido_de"></div><div class="col-6"><label class="form-label" for="v_ate">Válido até</label><input class="form-control" id="v_ate" type="date" name="valido_ate"></div></div></div>
+  <div class="modal-footer"><button type="button" class="btn btn-outline" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary"><i class="bi bi-cloud-arrow-up"></i> Enviar versão</button></div></form></div></div>
+<div class="modal fade" id="mEditarDoc" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><form class="modal-content" method="post" action="{{ aqui }}/editar">
+  <input type="hidden" name="csrf_token" value="{{ csrf }}">
+  <div class="modal-header flex-column align-items-start"><div class="modal-icon"><i class="bi bi-pencil"></i></div><h2 class="modal-title">Editar metadados</h2><p class="text-muted small mb-0">Só título, tipo e descrição. O arquivo muda apenas por nova versão.</p></div>
+  <div class="modal-body"><div class="mb-3"><label class="form-label" for="e_t">Título<span class="req">*</span></label><input class="form-control" id="e_t" name="titulo" value="{{ doc.titulo }}" required minlength="3" maxlength="200"></div>
+    <div class="mb-3"><label class="form-label" for="e_tipo">Tipo<span class="req">*</span></label><select class="form-select" id="e_tipo" name="tipo">{% for o in meta.tipos_documento %}<option value="{{ o.valor }}" {{ 'selected' if o.valor == doc.tipo }}>{{ o.rotulo }}</option>{% endfor %}</select></div>
+    <div><label class="form-label" for="e_d">Descrição</label><textarea class="form-control" id="e_d" name="descricao" rows="3" maxlength="5000">{{ doc.descricao or '' }}</textarea></div></div>
+  <div class="modal-footer"><button type="button" class="btn btn-outline" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary"><i class="bi bi-check2"></i> Salvar</button></div></form></div></div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui with context %}
+{% block title %}Documentos{% endblock %}
+{% block content %}
+{% call ui.header("Documentos", "Arquivos das mulheres, com versionamento: nada é sobrescrito.") %}
+  {% if can.escrita %}<a class="btn btn-primary" href="/documentos/novo"><i class="bi bi-cloud-arrow-up"></i> Enviar documento</a>{% endif %}
+{% endcall %}
+<div class="card table-card anim-in">
+  <form method="get" class="filter-bar" data-autosubmit-form>
+    <div class="input-icon grow"><i class="bi bi-search"></i><input class="form-control" type="search" name="q" value="{{ f.get('q', '') }}" placeholder="Buscar pelo título…" data-autosubmit autocomplete="off"></div>
+    <select class="form-select" name="tipo" data-autosubmit aria-label="Tipo"><option value="">Todos os tipos</option>{% for o in meta.tipos_documento %}<option value="{{ o.valor }}" {{ 'selected' if f.get('tipo') == o.valor }}>{{ o.rotulo }}</option>{% endfor %}</select>
+    {% if can.gestao %}<div class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" role="switch" id="inc" name="incluir_excluidos" value="true" {{ 'checked' if f.get('incluir_excluidos') == 'true' }} data-autosubmit><label class="form-check-label small" for="inc">Excluídos</label></div>{% endif %}
+    {% if f.get('mulher_id') %}<span class="chip">Filtrando por uma mulher <a href="{{ qs(mulher_id=None) }}" aria-label="Remover filtro"><i class="bi bi-x"></i></a></span><input type="hidden" name="mulher_id" value="{{ f.get('mulher_id') }}">{% endif %}
+    {% if f.get('q') or f.get('tipo') or f.get('mulher_id') or f.get('incluir_excluidos') %}<a class="btn btn-ghost btn-sm" href="/documentos"><i class="bi bi-x-lg"></i> Limpar</a>{% endif %}
+  </form>
+  {% if res["items"] %}
+  <div class="table-responsive"><table class="table table-hover"><thead><tr>
+    <th>{{ ui.th_sort('titulo', 'Documento', f.get('sort')) }}</th><th>Mulher</th><th>{{ ui.th_sort('tipo', 'Tipo', f.get('sort')) }}</th><th>Versão</th><th>Tamanho</th><th>{{ ui.th_sort('created_at', 'Criado', f.get('sort')) }}</th><th class="text-end">Ações</th></tr></thead><tbody>
+  {% for d in res["items"] %}
+    <tr style="--i:{{ loop.index0 }}" data-href="/documentos/{{ d.id }}">
+      <td><div class="d-flex align-items-center gap-3"><span class="file-icon" style="width:36px;height:36px;font-size:1rem"><i class="bi {{ 'bi-file-earmark-pdf' if d.versao and d.versao.mime_type == 'application/pdf' else 'bi-file-earmark-image' if d.versao and d.versao.mime_type.startswith('image') else 'bi-file-earmark-text' }}"></i></span>
+        <div><a class="row-title" href="/documentos/{{ d.id }}">{{ d.titulo }}</a>{% if d.deleted_at %} <span class="badge badge-outline"><i class="bi bi-trash3"></i> Excluído</span>{% endif %}{% if d.versao %}<div class="row-sub text-truncate" style="max-width:260px">{{ d.versao.nome_arquivo }}</div>{% endif %}</div></div></td>
+      <td><a href="/mulheres/{{ d.mulher.id }}?aba=documentos">{{ d.mulher.nome_completo }}</a></td>
+      <td><span class="badge badge-soft">{{ rot('tipos_documento', d.tipo) }}</span></td>
+      <td>v{{ d.versao_atual }}</td><td class="text-muted">{{ d.versao.tamanho_bytes|tamanho if d.versao else '—' }}</td><td class="text-muted">{{ d.created_at|dia }}</td>
+      <td class="text-end text-nowrap"><a class="btn btn-ghost btn-icon" href="/documentos/{{ d.id }}/download" title="Baixar"><i class="bi bi-download"></i></a><a class="btn btn-ghost btn-icon" href="/documentos/{{ d.id }}" title="Abrir"><i class="bi bi-eye"></i></a></td></tr>
+  {% endfor %}</tbody></table></div>
+  {{ ui.pager(res) }}
+  {% else %}{% call ui.empty('bi-folder2-open', 'Nenhum documento encontrado', 'Envie o primeiro documento ou ajuste os filtros.') %}{% if can.escrita %}<a class="btn btn-primary" href="/documentos/novo"><i class="bi bi-cloud-arrow-up"></i> Enviar documento</a>{% endif %}{% endcall %}{% endif %}
+</div>
+{% endblock %}

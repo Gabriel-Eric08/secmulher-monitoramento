@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui with context %}
+{% block title %}{{ ev.titulo }}{% endblock %}
+{% block content %}
+{% set aqui = '/eventos/' ~ ev.id %}
+{% call ui.header(ev.titulo, rot('tipos_evento', ev.tipo) ~ " · " ~ ev.mulher.nome_completo, crumbs=[('/eventos', 'Eventos'), (none, 'Detalhe')]) %}
+  <a class="btn btn-outline" href="/mulheres/{{ ev.mulher.id }}?aba=linha"><i class="bi bi-person-heart"></i> Linha do tempo da mulher</a>
+  {% if can.escrita %}<button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#mRetificar" data-modal-action="{{ aqui }}/retificar" data-modal-fields='{{ {"next": aqui}|tojson }}' data-modal-texts='{{ {"alvo": ev.titulo}|tojson }}'><i class="bi bi-pencil-square"></i> Retificar</button>{% endif %}
+{% endcall %}
+<div class="row g-4">
+  <div class="col-lg-7">
+    {% if original %}<div class="alert alert-warn d-flex gap-2 anim-in"><i class="bi bi-arrow-return-left"></i><div>Este registro <strong>retifica</strong> o evento <a href="/eventos/{{ original.id }}">“{{ original.titulo }}”</a>.</div></div>{% endif %}
+    <div class="card anim-in"><div class="card-header"><h2 class="card-title">Evento</h2><span class="badge badge-soft"><i class="bi {{ EVENTO_ICONE.get(ev.tipo) }}"></i> {{ rot('tipos_evento', ev.tipo) }}</span></div>
+      <div class="card-body"><dl class="kv" style="grid-template-columns:150px 1fr">
+        <dt>Mulher</dt><dd><a href="/mulheres/{{ ev.mulher.id }}">{{ ev.mulher.nome_completo }}</a></dd>
+        <dt>Aconteceu em</dt><dd>{{ ev.ocorrido_em|dt }}</dd>
+        <dt>Registrado em</dt><dd>{{ ev.registrado_em|dt }} <span class="text-muted">por {{ ev.registrado_por.nome }}</span></dd>
+        {% if ev.servico_mulher_id %}<dt>Atendimento</dt><dd><a href="/vinculos/{{ ev.servico_mulher_id }}">Abrir atendimento</a></dd>{% endif %}
+        <dt>Descrição</dt><dd style="white-space:pre-line">{{ ev.descricao|vazio }}</dd>
+        {% if ev.metadados %}<dt>Dados</dt><dd>{% for k, val in ev.metadados.items() %}<div class="mono">{{ k }}: {{ val }}</div>{% endfor %}</dd>{% endif %}
+      </dl></div></div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card anim-in" style="--i:1"><div class="card-header"><h2 class="card-title">Retificações</h2><span class="badge badge-outline">{{ retificacoes|length }}</span></div>
+      <div class="card-body">{% if retificacoes %}<ul class="timeline">{% for e in retificacoes %}{{ ui.evento_item(e, loop.index0, aqui, acoes=False) }}{% endfor %}</ul>
+        {% else %}<p class="text-muted mb-0">Este evento não foi retificado. Ele é imutável: se houver um erro, registre uma retificação.</p>{% endif %}</div></div>
+  </div>
+</div>
+{% if can.escrita %}{% include "partials/modal_retificar.html" %}{% endif %}
+{% endblock %}

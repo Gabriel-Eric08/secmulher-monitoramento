@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui with context %}
+{% block title %}Novo evento{% endblock %}
+{% block content %}
+{% call ui.header("Novo evento", "Registre um fato na linha do tempo de uma mulher.", crumbs=[('/eventos', 'Eventos'), (none, 'Novo')]) %}{% endcall %}
+<form method="post" class="card anim-in" style="max-width:760px">
+  <div class="card-body p-4">
+    {{ ui.csrf() }}
+    <div class="mb-3">{{ ui.mulher_picker(mulher_id, mulher_nome, required=True) }}</div>
+    <div class="row g-3">
+      <div class="col-md-5"><label class="form-label" for="tipo">Tipo<span class="req">*</span></label>
+        <select class="form-select" id="tipo" name="tipo" required>{% for o in meta.tipos_evento_manuais %}<option value="{{ o.valor }}">{{ o.rotulo }}</option>{% endfor %}</select></div>
+      <div class="col-md-7"><label class="form-label" for="ocorrido_em">Quando aconteceu</label><input class="form-control" id="ocorrido_em" type="datetime-local" name="ocorrido_em" data-now="default"><div class="form-text">Pode ser retroativo, nunca futuro.</div></div>
+      <div class="col-12"><label class="form-label" for="titulo">Título<span class="req">*</span></label><input class="form-control" id="titulo" name="titulo" required minlength="3" maxlength="200" placeholder="Ex.: Visita domiciliar"></div>
+      <div class="col-12"><label class="form-label" for="descricao">Descrição</label><textarea class="form-control" id="descricao" name="descricao" rows="5" maxlength="10000"></textarea></div>
+    </div>
+    <div class="alert alert-soft mt-4 mb-0 d-flex gap-2"><i class="bi bi-info-circle"></i><div>Eventos não podem ser editados depois de salvos; para corrigir, use <strong>Retificar</strong>.</div></div>
+  </div>
+  <div class="card-header border-top border-bottom-0 justify-content-end gap-2"><a class="btn btn-outline" href="/eventos">Cancelar</a><button class="btn btn-primary" type="submit"><i class="bi bi-check2"></i> Registrar evento</button></div>
+</form>
+{% endblock %}

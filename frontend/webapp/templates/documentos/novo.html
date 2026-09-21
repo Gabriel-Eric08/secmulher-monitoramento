@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui with context %}
+{% block title %}Enviar documento{% endblock %}
+{% block content %}
+{% call ui.header("Enviar documento", "Cria o documento com a versão 1.", crumbs=[('/documentos', 'Documentos'), (none, 'Novo')]) %}{% endcall %}
+<form method="post" enctype="multipart/form-data" class="card anim-in" style="max-width:760px">
+  <div class="card-body p-4">
+    {{ ui.csrf() }}
+    <div class="mb-3">{{ ui.mulher_picker(mulher_id, mulher_nome, required=True) }}</div>
+    <div class="mb-3">{{ ui.dropzone() }}</div>
+    <div class="row g-3">
+      <div class="col-md-8"><label class="form-label" for="titulo">Título<span class="req">*</span></label><input class="form-control" id="titulo" name="titulo" required minlength="3" maxlength="200" placeholder="Ex.: Encaminhamento"></div>
+      <div class="col-md-4"><label class="form-label" for="tipo">Tipo<span class="req">*</span></label><select class="form-select" id="tipo" name="tipo" required>{% for o in meta.tipos_documento %}<option value="{{ o.valor }}">{{ o.rotulo }}</option>{% endfor %}</select></div>
+      <div class="col-md-6"><label class="form-label" for="valido_de">Válido de</label><input class="form-control" id="valido_de" type="date" name="valido_de"></div>
+      <div class="col-md-6"><label class="form-label" for="valido_ate">Válido até</label><input class="form-control" id="valido_ate" type="date" name="valido_ate"></div>
+      <div class="col-12"><label class="form-label" for="descricao">Descrição</label><textarea class="form-control" id="descricao" name="descricao" rows="2" maxlength="5000"></textarea></div>
+    </div>
+  </div>
+  <div class="card-header border-top border-bottom-0 justify-content-end gap-2"><a class="btn btn-outline" href="/documentos">Cancelar</a><button class="btn btn-primary" type="submit"><i class="bi bi-cloud-arrow-up"></i> Enviar</button></div>
+</form>
+{% endblock %}

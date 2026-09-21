@@ -7,6 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base, IdMixin, TimestampMixin
 from app.modules.mulheres.model import Mulher
 from app.modules.servicos.model import Servico
+from app.modules.usuarios.model import Usuario
 from app.shared.enums import StatusServicoMulher
 from app.shared.utils import utcnow
 
@@ -41,3 +42,4 @@ class ServicoMulher(Base, IdMixin, TimestampMixin):
 
     mulher: Mapped[Mulher] = relationship(lazy="joined")
     servico: Mapped[Servico] = relationship(lazy="joined")
+    responsavel: Mapped[Usuario | None] = relationship(lazy="joined", foreign_keys=[responsavel_id])

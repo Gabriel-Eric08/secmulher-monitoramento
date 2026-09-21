@@ -4,15 +4,11 @@ from datetime import date, datetime
 from pydantic import ConfigDict, Field, field_validator
 
 from app.modules.eventos.schema import nao_futuro
+from app.modules.mulheres.schema import MulherMinima
 from app.modules.servicos.schema import ServicoResumo
+from app.modules.usuarios.schema import UsuarioResumo
 from app.shared.enums import StatusServicoMulher
 from app.shared.schemas import Esquema
-
-
-class MulherMinima(Esquema):
-    id: uuid.UUID
-    nome_completo: str
-    nome_social: str | None = None
 
 
 class VinculoCriar(Esquema):
@@ -59,6 +55,7 @@ class VinculoLeitura(Esquema):
     data_inicio: date
     data_encerramento: date | None = Field(None, description="Preenchida ao entrar em status final.")
     responsavel_id: uuid.UUID | None
+    responsavel: UsuarioResumo | None = Field(None, description="Usuário responsável (id e nome).")
     observacoes: str | None
     created_at: datetime
     updated_at: datetime
@@ -75,6 +72,7 @@ class VinculoLeitura(Esquema):
                     "data_inicio": "2026-03-03",
                     "data_encerramento": None,
                     "responsavel_id": "0b5d5c2e-1f0a-4b7e-9a0e-6f1c2d3e4f50",
+                    "responsavel": {"id": "0b5d5c2e-1f0a-4b7e-9a0e-6f1c2d3e4f50", "nome": "Ana Lima"},
                     "observacoes": None,
                     "created_at": "2026-03-03T13:05:00Z",
                     "updated_at": "2026-03-10T14:00:00Z",

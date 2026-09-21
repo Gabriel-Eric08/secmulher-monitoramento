@@ -9,6 +9,14 @@ from app.shared.schemas import Esquema
 from app.shared.utils import mascarar_cpf, mascarar_telefone, so_digitos, utcnow, validar_cpf
 
 
+class MulherMinima(Esquema):
+    """Referência enxuta a uma mulher (usada em vínculos, eventos e documentos)."""
+
+    id: uuid.UUID
+    nome_completo: str
+    nome_social: str | None = None
+
+
 class _MulherCampos(Esquema):
     """Campos editáveis do cadastro (validações compartilhadas entre criar e atualizar)."""
 

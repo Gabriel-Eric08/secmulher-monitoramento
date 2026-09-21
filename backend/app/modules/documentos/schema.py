@@ -3,6 +3,7 @@ from datetime import date, datetime
 
 from pydantic import ConfigDict, Field, model_validator
 
+from app.modules.mulheres.schema import MulherMinima
 from app.shared.enums import TipoDocumento
 from app.shared.schemas import Esquema
 
@@ -23,6 +24,7 @@ class DocumentoVersaoLeitura(Esquema):
 class DocumentoLeitura(Esquema):
     id: uuid.UUID
     mulher_id: uuid.UUID
+    mulher: MulherMinima = Field(..., description="Mulher dona do documento (id e nome).")
     servico_mulher_id: uuid.UUID | None
     evento_id: uuid.UUID | None
     titulo: str
@@ -42,6 +44,7 @@ class DocumentoLeitura(Esquema):
                 {
                     "id": "3b8c1d2e-4f5a-4b6c-9d7e-8f9a0b1c2d3e",
                     "mulher_id": "9d2e7f10-3a4b-4c5d-8e6f-1a2b3c4d5e6f",
+                    "mulher": {"id": "9d2e7f10-3a4b-4c5d-8e6f-1a2b3c4d5e6f", "nome_completo": "Maria Souza da Silva", "nome_social": None},
                     "servico_mulher_id": None,
                     "evento_id": None,
                     "titulo": "Encaminhamento",

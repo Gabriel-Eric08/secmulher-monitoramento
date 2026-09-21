@@ -421,6 +421,8 @@ cp .env.example .env                       # ajustar SECRET_KEY
 - Queries de listagem podem referenciar **models** de outros módulos para filtros (ex.: filtrar mulheres por status do vínculo); **regras** sempre passam pelo `service` do outro módulo.
 - Não testado automaticamente: `S3Storage` (requer MinIO/S3 e `boto3`) e execução em PostgreSQL. A migração usa `render_as_batch` e índices parciais com `sqlite_where`/`postgresql_where`, mas ainda deve ser validada em um Postgres real antes da produção.
 
+**Ajuste de contrato para o front (2026-09-21):** `VinculoLeitura` passou a incluir `responsavel: {id, nome}`, e `EventoLeitura` e `DocumentoLeitura` passaram a incluir `mulher: {id, nome_completo, nome_social}` (relacionamentos com carregamento já feito por join), para que as listas globais mostrem nomes em vez de UUIDs. Mudança apenas aditiva.
+
 ## 15. Perguntas em aberto
 
 Ver `arch.md` §11. As principais: campos reais do cadastro, status/transições reais, perfis, tipos de evento e se leituras serão auditadas.

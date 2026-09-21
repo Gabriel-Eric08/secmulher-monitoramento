@@ -6,6 +6,7 @@ from sqlalchemy import JSON, Enum, ForeignKey, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base, IdMixin, UTCDateTime
+from app.modules.mulheres.model import Mulher
 from app.modules.usuarios.model import Usuario
 from app.shared.enums import TipoEvento
 from app.shared.utils import utcnow
@@ -35,6 +36,7 @@ class Evento(Base, IdMixin):
     metadados: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
 
     autor: Mapped[Usuario] = relationship(lazy="joined", foreign_keys=[registrado_por])
+    mulher: Mapped[Mulher] = relationship(lazy="joined", foreign_keys=[mulher_id])
     retificacoes: Mapped[list["Evento"]] = relationship(
         "Evento", foreign_keys=[corrige_evento_id], viewonly=True, lazy="selectin", join_depth=1
     )

@@ -4,6 +4,7 @@ from typing import Any
 
 from pydantic import ConfigDict, Field, field_validator
 
+from app.modules.mulheres.schema import MulherMinima
 from app.modules.usuarios.schema import UsuarioResumo
 from app.shared.enums import TIPOS_EVENTO_SISTEMA, TipoEvento
 from app.shared.schemas import Esquema
@@ -68,6 +69,7 @@ class RetificacaoCriar(Esquema):
 class EventoLeitura(Esquema):
     id: uuid.UUID
     mulher_id: uuid.UUID
+    mulher: MulherMinima = Field(..., description="Mulher a que o evento se refere (id e nome).")
     servico_mulher_id: uuid.UUID | None
     tipo: TipoEvento
     titulo: str
@@ -95,6 +97,7 @@ class EventoLeitura(Esquema):
                 {
                     "id": "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
                     "mulher_id": "9d2e7f10-3a4b-4c5d-8e6f-1a2b3c4d5e6f",
+                    "mulher": {"id": "9d2e7f10-3a4b-4c5d-8e6f-1a2b3c4d5e6f", "nome_completo": "Maria Souza da Silva", "nome_social": None},
                     "servico_mulher_id": "7e6d5c4b-3a21-4f0e-9d8c-b7a695847362",
                     "tipo": "MUDANCA_STATUS",
                     "titulo": "Status alterado: SOLICITADO → EM_ANALISE",

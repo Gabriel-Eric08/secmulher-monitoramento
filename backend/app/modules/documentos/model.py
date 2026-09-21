@@ -5,6 +5,7 @@ from sqlalchemy import BigInteger, Date, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base, IdMixin, TimestampMixin, UTCDateTime
+from app.modules.mulheres.model import Mulher
 from app.shared.enums import TipoDocumento
 from app.shared.utils import utcnow
 
@@ -47,6 +48,7 @@ class Documento(Base, IdMixin, TimestampMixin):
     deleted_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("usuarios.id"), nullable=True)
     created_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("usuarios.id"))
 
+    mulher: Mapped[Mulher] = relationship(lazy="joined", foreign_keys=[mulher_id])
     versao: Mapped[DocumentoVersao | None] = relationship(
         DocumentoVersao,
         primaryjoin=lambda: and_(

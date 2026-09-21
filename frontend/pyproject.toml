@@ -1,0 +1,26 @@
+[project]
+name = "historico-servicos-frontend"
+version = "1.0.0"
+description = "Front (Jinja2 + Bootstrap) do Sistema de Histórico de Serviços — consome a API REST do backend"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "jinja2>=3.1",
+    "httpx>=0.27",
+    "itsdangerous>=2.2",
+    "python-multipart>=0.0.9",
+    "pydantic-settings>=2.3",
+]
+
+[project.optional-dependencies]
+# Os testes ponta a ponta sobem o backend em memória (ASGI) — por isso precisam dele instalado.
+dev = ["pytest>=8", "pytest-asyncio>=0.23"]
+
+[tool.setuptools.packages.find]
+include = ["webapp*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning"]

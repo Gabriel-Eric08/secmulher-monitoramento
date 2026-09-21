@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui with context %}
+{% block title %}Serviços{% endblock %}
+{% block content %}
+{% call ui.header("Serviços", "Catálogo dos serviços oferecidos pela Secretaria.") %}
+  {% if can.gestao %}<a class="btn btn-primary" href="/servicos/novo"><i class="bi bi-plus-lg"></i> Novo serviço</a>{% endif %}
+{% endcall %}
+<div class="card table-card anim-in">
+  <form method="get" class="filter-bar" data-autosubmit-form>
+    <div class="input-icon grow"><i class="bi bi-search"></i><input class="form-control" type="search" name="q" value="{{ f.get('q', '') }}" placeholder="Buscar pelo nome…" data-autosubmit autocomplete="off"></div>
+    <input class="form-control" style="max-width:190px" name="categoria" value="{{ f.get('categoria', '') }}" placeholder="Categoria" data-autosubmit>
+    <select class="form-select" name="ativo" data-autosubmit aria-label="Situação">
+      <option value="">Todos</option><option value="true" {{ 'selected' if f.get('ativo') == 'true' }}>Ativos</option><option value="false" {{ 'selected' if f.get('ativo') == 'false' }}>Inativos</option></select>
+    {% if f.get('q') or f.get('categoria') or f.get('ativo') %}<a class="btn btn-ghost btn-sm" href="/servicos"><i class="bi bi-x-lg"></i> Limpar</a>{% endif %}
+  </form>
+  {% if res["items"] %}
+  <div class="table-responsive"><table class="table table-hover"><thead><tr>
+    <th>{{ ui.th_sort('nome', 'Serviço', f.get('sort', 'nome')) }}</th><th>{{ ui.th_sort('categoria', 'Categoria', f.get('sort')) }}</th><th>Descrição</th><th>Situação</th><th class="text-end">Ações</th></tr></thead><tbody>
+  {% for s in res["items"] %}
+    <tr style="--i:{{ loop.index0 }}">
+      <td><span class="row-title">{{ s.nome }}</span></td>
+      <td>{% if s.categoria %}<span class="badge badge-soft">{{ s.categoria }}</span>{% else %}—{% endif %}</td>
+      <td class="text-muted" style="max-width:340px"><span class="text-truncate-2">{{ s.descricao|vazio }}</span></td>
+      <td>{% if s.ativo %}<span class="status-badge st-concluido">Ativo</span>{% else %}<span class="status-badge st-solicitado">Inativo</span>{% endif %}</td>
+      <td class="text-end text-nowrap">
+        <a class="btn btn-ghost btn-sm" href="/vinculos?servico_id={{ s.id }}"><i class="bi bi-diagram-3"></i> Atendimentos</a>
+        {% if can.gestao %}
+        <a class="btn btn-ghost btn-icon" href="/servicos/{{ s.id }}/editar" title="Editar"><i class="bi bi-pencil"></i></a>
+        <form class="d-inline" method="post" action="/servicos/{{ s.id }}/ativo" {% if s.ativo %}data-confirm="Serviços inativos não aceitam novos vínculos, mas os atendimentos existentes e o histórico são mantidos." data-confirm-title="Inativar serviço?" data-confirm-label="Inativar" data-confirm-icon="bi-pause-circle"{% endif %}>
+          {{ ui.csrf() }}<input type="hidden" name="ativo" value="{{ 'false' if s.ativo else 'true' }}"><input type="hidden" name="next" value="{{ request.url.path ~ qs() }}">
+          <button class="btn btn-ghost btn-icon" type="submit" data-no-loading title="{{ 'Inativar' if s.ativo else 'Ativar' }}"><i class="bi {{ 'bi-toggle-on text-primary' if s.ativo else 'bi-toggle-off' }} fs-5"></i></button></form>
+        {% endif %}
+      </td></tr>
+  {% endfor %}</tbody></table></div>
+  {{ ui.pager(res) }}
+  {% else %}{% call ui.empty('bi-grid-1x2', 'Nenhum serviço encontrado', 'Cadastre os serviços que a Secretaria oferece.') %}{% if can.gestao %}<a class="btn btn-primary" href="/servicos/novo"><i class="bi bi-plus-lg"></i> Novo serviço</a>{% endif %}{% endcall %}{% endif %}
+</div>
+{% endblock %}

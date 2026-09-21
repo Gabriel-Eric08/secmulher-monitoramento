@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui with context %}
+{% block title %}{{ v.servico.nome }}{% endblock %}
+{% block content %}
+{% set aqui = '/vinculos/' ~ v.id %}
+{% call ui.header(v.servico.nome, "Atendimento de " ~ v.mulher.nome_completo, crumbs=[('/vinculos', 'Atendimentos'), (none, v.servico.nome)]) %}
+  <a class="btn btn-outline" href="/mulheres/{{ v.mulher.id }}"><i class="bi bi-person-heart"></i> Ver mulher</a>
+  {{ ui.btn_status(v, aqui, 'btn btn-primary') }}
+  {% if can.escrita %}<button class="btn btn-outline" type="button" data-bs-toggle="modal" data-bs-target="#mVinculoEditar"
+    data-modal-action="{{ aqui }}/editar" data-modal-fields='{{ {"next": aqui, "data_inicio": v.data_inicio, "observacoes": v.observacoes or ""}|tojson }}'
+    data-modal-texts='{{ {"alvo": v.servico.nome, "responsavel": v.responsavel.nome if v.responsavel else "ninguém"}|tojson }}'><i class="bi bi-pencil"></i> Editar</button>{% endif %}
+{% endcall %}
+<div class="row g-4">
+  <div class="col-lg-4">
+    <div class="card anim-in"><div class="card-header"><h2 class="card-title">Situação atual</h2>{{ ui.status(v.status) }}</div>
+      <div class="card-body">
+        <dl class="kv" style="grid-template-columns:120px 1fr">
+          <dt>Mulher</dt><dd><a href="/mulheres/{{ v.mulher.id }}">{{ v.mulher.nome_completo }}</a></dd>
+          <dt>Serviço</dt><dd>{{ v.servico.nome }}{% if v.servico.categoria %}<div class="row-sub">{{ v.servico.categoria }}</div>{% endif %}</dd>
+          <dt>Responsável</dt><dd>{{ v.responsavel.nome if v.responsavel else '—' }}</dd>
+          <dt>Início</dt><dd>{{ v.data_inicio|dia }}</dd>
+          <dt>Encerramento</dt><dd>{{ v.data_encerramento|dia }}</dd>
+          {% if v.observacoes %}<dt>Observações</dt><dd style="white-space:pre-line">{{ v.observacoes }}</dd>{% endif %}
+        </dl>
+        <div class="divider"></div>
+        <div class="small text-muted mb-2">Próximos status possíveis</div>
+        <div class="d-flex flex-wrap gap-2">{% for o in transicoes.permitidas %}<span class="status-badge {{ STATUS_CLASSE.get(o.valor) }}">{{ o.rotulo }}</span>{% else %}<span class="text-muted small">Atendimento encerrado: para retomar, crie um novo vínculo.</span>{% endfor %}</div>
+      </div></div>
+  </div>
+  <div class="col-lg-8">
+    <div class="card anim-in" style="--i:1"><div class="card-header"><h2 class="card-title">Linha do tempo do atendimento</h2>
+      {% if can.escrita %}<button class="btn btn-outline btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#mEvento"><i class="bi bi-plus-lg"></i> Novo evento</button>{% endif %}</div>
+      <div class="card-body">{% if eventos %}<ul class="timeline">{% for e in eventos %}{{ ui.evento_item(e, loop.index0, aqui) }}{% endfor %}</ul>
+        {% else %}{{ ui.empty('bi-clock-history', 'Sem eventos', 'Os registros deste atendimento aparecerão aqui.') }}{% endif %}</div></div>
+  </div>
+</div>
+{% if can.escrita %}
+  {% include "partials/modal_status.html" %}{% include "partials/modal_vinculo_editar.html" %}{% include "partials/modal_retificar.html" %}
+  {% with action = '/mulheres/' ~ v.mulher.id ~ '/eventos', vinculos = [v], next = aqui %}{% include "partials/modal_evento.html" %}{% endwith %}
+{% endif %}
+{% endblock %}

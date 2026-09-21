@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui with context %}
+{% block title %}Novo atendimento{% endblock %}
+{% block content %}
+{% call ui.header("Novo atendimento", "Vincule um serviço do catálogo a uma mulher.", crumbs=[('/vinculos', 'Atendimentos'), (none, 'Novo')]) %}{% endcall %}
+<form method="post" class="card anim-in" style="max-width:720px">
+  <div class="card-body p-4">
+    {{ ui.csrf() }}
+    <div class="mb-3">{{ ui.mulher_picker(mulher_id, mulher_nome, required=True) }}</div>
+    <div class="mb-3"><label class="form-label" for="servico_id">Serviço<span class="req">*</span></label>
+      <select class="form-select" id="servico_id" name="servico_id" required><option value="" disabled selected>Escolha um serviço…</option>
+        {% for s in servicos %}<option value="{{ s.id }}">{{ s.nome }}{% if s.categoria %} — {{ s.categoria }}{% endif %}</option>{% endfor %}</select></div>
+    <div class="row g-3 mb-3">
+      <div class="col-md-5"><label class="form-label" for="data_inicio">Data de início</label><input class="form-control" id="data_inicio" type="date" name="data_inicio"><div class="form-text">Vazio = hoje.</div></div>
+      <div class="col-md-7"><label class="form-label" for="observacoes">Observações</label><input class="form-control" id="observacoes" name="observacoes" maxlength="5000"></div></div>
+    <div class="form-check"><input class="form-check-input" type="checkbox" name="assumir" value="1" id="assumir" checked><label class="form-check-label" for="assumir">Sou o(a) responsável por este atendimento</label></div>
+  </div>
+  <div class="card-header border-top border-bottom-0 justify-content-end gap-2"><a class="btn btn-outline" href="/vinculos">Cancelar</a><button class="btn btn-primary" type="submit"><i class="bi bi-check2"></i> Vincular</button></div>
+</form>
+{% endblock %}

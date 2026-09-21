@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% import "_macros.html" as ui with context %}
+{% block title %}Atendimentos{% endblock %}
+{% block content %}
+{% call ui.header("Atendimentos", "Serviços vinculados às mulheres, com o status atual de cada um.") %}
+  {% if can.escrita %}<a class="btn btn-primary" href="/vinculos/novo"><i class="bi bi-plus-lg"></i> Novo atendimento</a>{% endif %}
+{% endcall %}
+<div class="card table-card anim-in">
+  <form method="get" class="filter-bar" data-autosubmit-form>
+    <select class="form-select" name="status" data-autosubmit aria-label="Status"><option value="">Qualquer status</option>{% for o in meta.status_servico_mulher %}<option value="{{ o.valor }}" {{ 'selected' if f.get('status') == o.valor }}>{{ o.rotulo }}</option>{% endfor %}</select>
+    <select class="form-select" name="servico_id" data-autosubmit aria-label="Serviço"><option value="">Todos os serviços</option>{% for s in servicos %}<option value="{{ s.id }}" {{ 'selected' if f.get('servico_id') == s.id }}>{{ s.nome }}</option>{% endfor %}</select>
+    {% if f.get('mulher_id') %}<span class="chip">Filtrando por uma mulher <a href="{{ qs(mulher_id=None) }}" aria-label="Remover filtro"><i class="bi bi-x"></i></a></span>{% endif %}
+    {% if f.get('status') or f.get('servico_id') or f.get('mulher_id') %}<a class="btn btn-ghost btn-sm" href="/vinculos"><i class="bi bi-x-lg"></i> Limpar</a>{% endif %}
+  </form>
+  {% if res["items"] %}
+  <div class="table-responsive"><table class="table table-hover"><thead><tr>
+    <th>Mulher</th><th>Serviço</th><th>{{ ui.th_sort('status', 'Status', f.get('sort')) }}</th><th>Responsável</th><th>{{ ui.th_sort('data_inicio', 'Início', f.get('sort')) }}</th><th class="text-end">Ações</th></tr></thead><tbody>
+  {% for v in res["items"] %}
+    <tr style="--i:{{ loop.index0 }}" data-href="/vinculos/{{ v.id }}">
+      <td><div class="d-flex align-items-center gap-2">{{ ui.avatar(v.mulher.nome_completo, 'avatar-sm') }}<a class="row-title" href="/mulheres/{{ v.mulher.id }}">{{ v.mulher.nome_completo }}</a></div></td>
+      <td>{{ v.servico.nome }}</td><td>{{ ui.status(v.status) }}</td>
+      <td>{{ v.responsavel.nome if v.responsavel else '—' }}</td><td class="text-muted">{{ v.data_inicio|dia }}</td>
+      <td class="text-end text-nowrap">{{ ui.btn_status(v, request.url.path ~ qs()) }}<a class="btn btn-ghost btn-icon" href="/vinculos/{{ v.id }}" title="Abrir"><i class="bi bi-eye"></i></a></td></tr>
+  {% endfor %}</tbody></table></div>
+  {{ ui.pager(res) }}
+  {% else %}{% call ui.empty('bi-diagram-3', 'Nenhum atendimento encontrado', 'Vincule serviços às mulheres para acompanhá-los aqui.') %}{% if can.escrita %}<a class="btn btn-primary" href="/vinculos/novo"><i class="bi bi-plus-lg"></i> Novo atendimento</a>{% endif %}{% endcall %}{% endif %}
+</div>
+{% if can.escrita %}{% include "partials/modal_status.html" %}{% endif %}
+{% endblock %}

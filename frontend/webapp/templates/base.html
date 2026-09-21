@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  {% include "_head.html" %}
+  <title>{% block title %}{{ app_name }}{% endblock %} · Secretaria da Mulher</title>
+</head>
+<body>
+<div id="nav-progress"></div>
+{% macro nav(href, icone, texto, ativo) -%}
+  <a class="nav-link-app {{ 'active' if ativo }}" href="{{ href }}"{% if ativo %} aria-current="page"{% endif %}><i class="bi {{ icone }}"></i><span>{{ texto }}</span></a>
+{%- endmacro %}
+<div class="app-shell">
+  <aside class="app-sidebar" aria-label="Navegação principal">
+    <a class="brand" href="/mulheres">
+      <span class="brand-mark"><i class="bi bi-heart-fill"></i></span>
+      <span><span class="brand-name d-block">Histórico de Serviços</span><span class="brand-sub">Secretaria da Mulher</span></span>
+    </a>
+    <nav class="flex-grow-1 overflow-auto pb-3">
+      <div class="nav-section">Atendimento</div>
+      {{ nav("/mulheres", "bi-people", "Mulheres", path.startswith("/mulheres")) }}
+      {{ nav("/vinculos", "bi-diagram-3", "Atendimentos", path.startswith("/vinculos")) }}
+      <div class="nav-section">Registros</div>
+      {{ nav("/eventos", "bi-clock-history", "Eventos", path.startswith("/eventos")) }}
+      {{ nav("/documentos", "bi-folder2-open", "Documentos", path.startswith("/documentos")) }}
+      <div class="nav-section">Cadastros</div>
+      {{ nav("/servicos", "bi-grid-1x2", "Serviços", path.startswith("/servicos")) }}
+      {% if can.auditoria or can.admin %}
+      <div class="nav-section">Administração</div>
+      {% if can.auditoria %}{{ nav("/auditoria", "bi-shield-check", "Auditoria", path.startswith("/auditoria")) }}{% endif %}
+      {% if can.admin %}{{ nav("/usuarios", "bi-person-gear", "Usuários", path.startswith("/usuarios")) }}{% endif %}
+      {% endif %}
+    </nav>
+    <div class="sidebar-footer dropup">
+      <button class="user-chip" data-bs-toggle="dropdown" aria-expanded="false" type="button">
+        <span class="avatar">{{ user.nome|iniciais }}</span>
+        <span class="flex-grow-1 text-truncate"><span class="d-block fw-semibold text-truncate">{{ user.nome }}</span><span class="small text-muted">{{ rot('perfis_usuario', user.perfil) }}</span></span>
+        <i class="bi bi-chevron-expand text-muted"></i>
+      </button>
+      <ul class="dropdown-menu w-100">
+        <li><a class="dropdown-item" href="/perfil"><i class="bi bi-person-circle"></i> Meu perfil</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li>
+          <form method="post" action="/logout" data-no-loading>
+            <input type="hidden" name="csrf_token" value="{{ csrf }}">
+            <button class="dropdown-item text-danger" type="submit"><i class="bi bi-box-arrow-right"></i> Sair</button>
+          </form>
+        </li>
+      </ul>
+    </div>
+  </aside>
+  <div class="sidebar-backdrop"></div>
+  <div class="app-main">
+    <header class="topbar">
+      <button class="btn btn-outline btn-icon" data-sidebar-toggle aria-label="Abrir menu" type="button"><i class="bi bi-list fs-5"></i></button>
+      <span class="brand-mark" style="width:30px;height:30px;border-radius:9px;font-size:.85rem"><i class="bi bi-heart-fill"></i></span>
+      <strong>Histórico de Serviços</strong>
+    </header>
+    <main class="page-content">{% block content %}{% endblock %}</main>
+  </div>
+</div>
+
+<!-- diálogo de confirmação reutilizável (formulários com data-confirm) -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+    <div class="modal-header flex-column align-items-start">
+      <div class="modal-icon"><i class="bi bi-question-circle"></i></div>
+      <h2 class="modal-title" id="confirmTitle">Confirmar ação</h2>
+    </div>
+    <div class="modal-body">
+      <p id="confirmText" class="text-muted mb-3"></p>
+      <div id="confirmReasonWrap" class="d-none">
+        <label class="form-label" for="confirmReason"><span id="confirmReasonLabel">Motivo</span><span class="req">*</span></label>
+        <textarea id="confirmReason" class="form-control" rows="3" maxlength="500"></textarea>
+        <div class="invalid-feedback">Informe o motivo (mínimo de 3 caracteres).</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Cancelar</button>
+      <button type="button" class="btn btn-primary" id="confirmOk">Confirmar</button>
+    </div>
+  </div></div>
+</div>
+{% include "_scripts.html" %}
+</body>
+</html>

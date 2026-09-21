@@ -1,0 +1,149 @@
+{# Componentes reutilizáveis (equivalentes aos do shadcn/ui). Importar com: {% import "_macros.html" as ui with context %} #}
+
+{% macro csrf() %}<input type="hidden" name="csrf_token" value="{{ csrf }}">{% endmacro %}
+
+{% macro status(valor) -%}
+  <span class="status-badge {{ STATUS_CLASSE.get(valor, '') }}">{{ rot('status_servico_mulher', valor) }}</span>
+{%- endmacro %}
+
+{% macro avatar(nome, classe='') -%}<span class="avatar {{ classe }}">{{ nome|iniciais }}</span>{%- endmacro %}
+
+{% macro header(titulo, subtitulo=None, crumbs=None) %}
+<div class="page-header">
+  <div>
+    {% if crumbs %}<div class="crumbs">{% for href, texto in crumbs %}{% if href %}<a href="{{ href }}">{{ texto }}</a><i class="bi bi-chevron-right" style="font-size:.6rem"></i>{% else %}<span>{{ texto }}</span>{% endif %}{% endfor %}</div>{% endif %}
+    <h1 class="page-title">{{ titulo }}</h1>
+    {% if subtitulo %}<p class="page-sub">{{ subtitulo }}</p>{% endif %}
+  </div>
+  <div class="d-flex gap-2 flex-wrap">{{ caller() if caller else '' }}</div>
+</div>
+{% endmacro %}
+
+{% macro empty(icone, titulo, texto='') %}
+<div class="empty">
+  <div class="empty-icon"><i class="bi {{ icone }}"></i></div>
+  <h3>{{ titulo }}</h3>
+  {% if texto %}<p>{{ texto }}</p>{% endif %}
+  {{ caller() if caller else '' }}
+</div>
+{% endmacro %}
+
+{% macro pager(res) %}
+{% if res.total > 0 %}
+<div class="pager">
+  <span class="small text-muted">Mostrando {{ (res.page - 1) * res.page_size + 1 }}–{{ [res.page * res.page_size, res.total]|min }} de <strong>{{ res.total }}</strong></span>
+  {% if res.pages > 1 %}
+  <nav class="pages" aria-label="Paginação">
+    <a class="pg {{ 'off' if res.page <= 1 }}" href="{{ qs(page=res.page - 1) }}" aria-label="Anterior"><i class="bi bi-chevron-left"></i></a>
+    {% set ns = namespace(last=0) %}
+    {% for n in range(1, res.pages + 1) %}
+      {% if n == 1 or n == res.pages or (n - res.page)|abs <= 1 %}
+        {% if n - ns.last > 1 %}<span class="pg gap">…</span>{% endif %}
+        {% if n == res.page %}<span class="pg current" aria-current="page">{{ n }}</span>{% else %}<a class="pg" href="{{ qs(page=n) }}">{{ n }}</a>{% endif %}
+        {% set ns.last = n %}
+      {% endif %}
+    {% endfor %}
+    <a class="pg {{ 'off' if res.page >= res.pages }}" href="{{ qs(page=res.page + 1) }}" aria-label="Próxima"><i class="bi bi-chevron-right"></i></a>
+  </nav>
+  {% endif %}
+</div>
+{% endif %}
+{% endmacro %}
+
+{# cabeçalho de coluna ordenável: ?sort=campo / ?sort=-campo #}
+{% macro th_sort(campo, texto, atual) %}
+  {% set ativo = atual == campo or atual == '-' ~ campo %}
+  {% set prox = '-' ~ campo if atual == campo else campo %}
+  <a class="sort-link {{ 'active' if ativo }}" href="{{ qs(sort=prox) }}">{{ texto }}<i class="bi {{ 'bi-arrow-down' if atual == '-' ~ campo else 'bi-arrow-up' if atual == campo else 'bi-arrow-down-up' }}"></i></a>
+{% endmacro %}
+
+{# campo de formulário com rótulo e erro #}
+{% macro field(name, label, form, erros, type='text', required=False, placeholder='', mask='', hint='', maxlength='', autofocus=False, cols='') %}
+<div class="{{ cols }}">
+  <label class="form-label" for="f_{{ name }}">{{ label }}{% if required %}<span class="req">*</span>{% endif %}</label>
+  {% if type == 'textarea' %}
+    <textarea class="form-control {{ 'is-invalid' if erros.get(name) }}" id="f_{{ name }}" name="{{ name }}" rows="3" placeholder="{{ placeholder }}" {{ 'maxlength=' ~ maxlength if maxlength }}>{{ form.get(name) or '' }}</textarea>
+  {% else %}
+    <input class="form-control {{ 'is-invalid' if erros.get(name) }}" id="f_{{ name }}" type="{{ type }}" name="{{ name }}" value="{{ form.get(name) or '' }}" placeholder="{{ placeholder }}" {{ 'required' if required }} {{ 'autofocus' if autofocus }} {% if mask %}data-mask="{{ mask }}"{% endif %} {% if maxlength %}maxlength="{{ maxlength }}"{% endif %} {% if type == 'date' %}max="{{ '9999-12-31' }}"{% endif %}>
+  {% endif %}
+  {% if erros.get(name) %}<div class="invalid-feedback d-block">{{ erros[name] }}</div>{% elif hint %}<div class="form-text">{{ hint }}</div>{% endif %}
+</div>
+{% endmacro %}
+
+{# seletor de mulher com autocompletar. Envia `mulher_id` (e opcionalmente `mulher_nome`) #}
+{% macro mulher_picker(valor_id='', valor_nome='', required=False, name='mulher_id', nome_name='', label='Mulher') %}
+<div class="picker {{ 'has-value' if valor_id }}" data-url="/mulheres/buscar">
+  <label class="form-label" for="pk_{{ name }}">{{ label }}{% if required %}<span class="req">*</span>{% endif %}</label>
+  <input type="hidden" class="picker-id" name="{{ name }}" value="{{ valor_id }}">
+  {% if nome_name %}<input type="hidden" class="picker-nome" name="{{ nome_name }}" value="{{ valor_nome }}">{% endif %}
+  <div class="picker-input input-icon">
+    <i class="bi bi-search"></i>
+    <input id="pk_{{ name }}" type="text" class="form-control" placeholder="Digite o nome ou CPF (mín. 2 letras)…" autocomplete="off">
+  </div>
+  <div class="picker-chip">
+    <span class="avatar avatar-sm"><i class="bi bi-person"></i></span>
+    <strong class="picker-name flex-grow-1">{{ valor_nome }}</strong>
+    <button type="button" class="btn btn-ghost btn-icon picker-clear" aria-label="Trocar"><i class="bi bi-x-lg"></i></button>
+  </div>
+  <div class="picker-results" role="listbox"></div>
+</div>
+{% endmacro %}
+
+{% macro dropzone(name='arquivo', texto='Arraste o arquivo aqui ou clique para escolher', required=True) %}
+<div class="dropzone">
+  <input type="file" name="{{ name }}" {{ 'required' if required }} accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xlsx">
+  <div class="dz-label"><i class="bi bi-cloud-arrow-up dz-icon"></i><strong>{{ texto }}</strong><br><small class="text-muted">PDF, JPG, PNG, DOC/DOCX ou XLSX — até 20 MB</small></div>
+</div>
+{% endmacro %}
+
+{# botão/ação de excluir com confirmação (modal do base.html) #}
+{% macro confirm_form(action, texto, label, classe='btn btn-outline-danger btn-sm', titulo='Confirmar exclusão', prompt='', icone='bi-trash', danger=True, prompt_label='Motivo') %}
+<form method="post" action="{{ action }}" data-confirm="{{ texto }}" data-confirm-title="{{ titulo }}" data-confirm-label="{{ label }}" {{ 'data-confirm-danger' if danger }} {% if prompt %}data-prompt="{{ prompt }}" data-prompt-label="{{ prompt_label }}"{% endif %} class="d-inline">
+  {{ csrf() }}
+  <button class="{{ classe }}" type="submit" data-no-loading><i class="bi {{ icone }}"></i> {{ label }}</button>
+</form>
+{% endmacro %}
+
+{# botão que abre o modal "Mudar status" já preenchido para um vínculo #}
+{% macro btn_status(v, next, classe='btn btn-soft btn-sm') %}
+{% set destinos = meta.transicoes_status.get(v.status, []) %}
+{% if destinos and can.escrita %}
+  {% set opts = [] %}{% for d in destinos %}{% set _ = opts.append([d, rot('status_servico_mulher', d)]) %}{% endfor %}
+  <button type="button" class="{{ classe }}" data-bs-toggle="modal" data-bs-target="#mStatus"
+    data-modal-action="/vinculos/{{ v.id }}/transicao"
+    data-modal-fields='{{ {"next": next}|tojson }}'
+    data-modal-texts='{{ {"alvo": v.servico.nome ~ " · " ~ v.mulher.nome_completo, "atual": rot("status_servico_mulher", v.status)}|tojson }}'
+    data-modal-options='{{ {"status_novo": opts}|tojson }}'><i class="bi bi-arrow-left-right"></i> Mudar status</button>
+{% endif %}
+{% endmacro %}
+
+{# item da linha do tempo. `mostrar_mulher` inclui o nome da mulher (listas globais) #}
+{% macro evento_item(e, i, next, mostrar_mulher=False, acoes=True) %}
+<li class="tl-item {{ 'sys' if e.tipo in ('MUDANCA_STATUS', 'DOCUMENTO_ANEXADO') }} {{ 'retif' if e.tipo == 'RETIFICACAO' }}" style="--i:{{ i }}">
+  <span class="tl-dot"><i class="bi {{ EVENTO_ICONE.get(e.tipo, 'bi-circle') }}"></i></span>
+  <div class="tl-card">
+    <div class="d-flex justify-content-between align-items-start gap-2">
+      <div class="min-w-0">
+        <div class="tl-title">{{ e.titulo }}</div>
+        <div class="tl-meta">
+          <span><i class="bi bi-tag"></i> {{ rot('tipos_evento', e.tipo) }}</span>
+          <span title="Quando aconteceu"><i class="bi bi-calendar-event"></i> {{ e.ocorrido_em|dt }}</span>
+          <span title="Registrado em {{ e.registrado_em|dt }}"><i class="bi bi-person"></i> {{ e.registrado_por.nome }}</span>
+          {% if mostrar_mulher %}<a href="/mulheres/{{ e.mulher.id }}"><i class="bi bi-person-heart"></i> {{ e.mulher.nome_completo }}</a>{% endif %}
+        </div>
+      </div>
+      {% if acoes %}<div class="dropdown flex-none">
+        <button class="btn btn-ghost btn-icon" data-bs-toggle="dropdown" aria-label="Ações" type="button"><i class="bi bi-three-dots"></i></button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="/eventos/{{ e.id }}"><i class="bi bi-eye"></i> Ver detalhe</a></li>
+          {% if can.escrita %}<li><button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#mRetificar"
+            data-modal-action="/eventos/{{ e.id }}/retificar" data-modal-fields='{{ {"next": next}|tojson }}' data-modal-texts='{{ {"alvo": e.titulo}|tojson }}'><i class="bi bi-pencil-square"></i> Retificar</button></li>{% endif %}
+        </ul>
+      </div>{% endif %}
+    </div>
+    {% if e.descricao %}<p class="tl-desc">{{ e.descricao }}</p>{% endif %}
+    {% if e.corrige_evento_id %}<a class="badge badge-soft mt-2 d-inline-block" href="/eventos/{{ e.corrige_evento_id }}"><i class="bi bi-arrow-return-left"></i> Corrige outro evento</a>{% endif %}
+    {% if e.retificado_por %}<a class="badge bg-warning-subtle text-warning-emphasis mt-2 d-inline-block" href="/eventos/{{ e.id }}"><i class="bi bi-pencil-square"></i> Retificado {{ e.retificado_por|length }}×</a>{% endif %}
+  </div>
+</li>
+{% endmacro %}

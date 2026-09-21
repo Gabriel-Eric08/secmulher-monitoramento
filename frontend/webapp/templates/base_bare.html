@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  {% include "_head.html" %}
+  <title>{% block title %}{{ app_name }}{% endblock %} · Secretaria da Mulher</title>
+</head>
+<body>
+  <div id="nav-progress"></div>
+  {% block bare %}{% endblock %}
+  {% include "_scripts.html" %}
+</body>
+</html>

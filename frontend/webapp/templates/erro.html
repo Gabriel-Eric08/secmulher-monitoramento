@@ -1,0 +1,23 @@
+{% extends "base.html" if user else "base_bare.html" %}
+{% block title %}Erro {{ status }}{% endblock %}
+{% set corpo %}
+<div class="error-page">
+  <div>
+    <div class="error-code">{{ status }}</div>
+    <h1 class="h3 mt-3">
+      {% if status == 404 %}Não encontramos o que você procura
+      {% elif status == 403 %}Você não tem acesso a esta página
+      {% elif status == 503 %}Não foi possível falar com a API
+      {% else %}Algo deu errado{% endif %}
+    </h1>
+    <p class="text-muted mx-auto" style="max-width:460px">{{ erro.message }}</p>
+    {% if erro.request_id %}<p class="small text-muted">Código da requisição: <code>{{ erro.request_id }}</code></p>{% endif %}
+    <div class="d-flex gap-2 justify-content-center mt-4">
+      <button class="btn btn-outline" type="button" data-back><i class="bi bi-arrow-left"></i> Voltar</button>
+      <a class="btn btn-primary" href="{{ '/mulheres' if user else '/login' }}"><i class="bi bi-house"></i> Ir para o início</a>
+    </div>
+  </div>
+</div>
+{% endset %}
+{% block content %}{{ corpo }}{% endblock %}
+{% block bare %}{{ corpo }}{% endblock %}

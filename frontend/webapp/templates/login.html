@@ -1,0 +1,47 @@
+{% extends "base_bare.html" %}
+{% block title %}Entrar{% endblock %}
+{% block bare %}
+<div class="login-wrap">
+  <section class="login-hero">
+    <div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div>
+    <a class="brand text-white p-0" href="/login" style="color:#fff">
+      <span class="brand-mark" style="background:rgba(255,255,255,.2);box-shadow:none"><i class="bi bi-heart-fill"></i></span>
+      <span><span class="brand-name d-block">Histórico de Serviços</span><span class="brand-sub" style="color:rgba(255,255,255,.75)">Secretaria da Mulher</span></span>
+    </a>
+    <div>
+      <h1 class="anim-in">Cada atendimento, registrado com cuidado.</h1>
+      <p class="anim-in" style="--i:1">Acompanhe serviços, linha do tempo e documentos de cada mulher atendida, com histórico que nunca se perde.</p>
+      <ul class="login-points">
+        <li class="anim-in" style="--i:2"><i class="bi bi-clock-history"></i> Linha do tempo imutável de cada atendimento</li>
+        <li class="anim-in" style="--i:3"><i class="bi bi-folder-check"></i> Documentos com versionamento seguro</li>
+        <li class="anim-in" style="--i:4"><i class="bi bi-shield-lock"></i> Toda ação é auditada</li>
+      </ul>
+    </div>
+    <small style="color:rgba(255,255,255,.65)">Uso restrito a servidores autorizados. Os dados são sensíveis e protegidos pela LGPD.</small>
+  </section>
+  <section class="login-form-side">
+    <div class="login-card">
+      <h2>Entrar</h2>
+      <p class="text-muted mb-4">Use seu e-mail institucional para acessar o sistema.</p>
+      {% if erro %}<div class="alert alert-err d-flex gap-2 align-items-start" role="alert"><i class="bi bi-exclamation-octagon-fill"></i><div>{{ erro }}</div></div>{% endif %}
+      <form method="post" action="/login" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf }}">
+        <input type="hidden" name="next" value="{{ next }}">
+        <div class="mb-3">
+          <label class="form-label" for="email">E-mail</label>
+          <div class="input-icon"><i class="bi bi-envelope"></i>
+            <input class="form-control" id="email" type="email" name="email" value="{{ email }}" placeholder="nome@secretaria.gov.br" autocomplete="username" required autofocus></div>
+        </div>
+        <div class="mb-4">
+          <label class="form-label" for="senha">Senha</label>
+          <div class="input-icon"><i class="bi bi-lock"></i>
+            <input class="form-control" id="senha" type="password" name="senha" placeholder="••••••••" autocomplete="current-password" required style="padding-right:2.6rem">
+            <button class="btn btn-ghost btn-icon toggle-pw" type="button" data-toggle-password="#senha" aria-label="Mostrar senha"><i class="bi bi-eye"></i></button></div>
+        </div>
+        <button class="btn btn-primary w-100 py-2" type="submit">Entrar <i class="bi bi-arrow-right"></i></button>
+      </form>
+      <p class="text-muted small mt-4 mb-0 text-center">Esqueceu a senha? Peça a redefinição a um administrador.</p>
+    </div>
+  </section>
+</div>
+{% endblock %}

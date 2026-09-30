@@ -1,13 +1,20 @@
-"""Abstração de armazenamento de arquivos (local em dev, S3/MinIO em produção)."""
+"""Abstração de armazenamento de arquivos (local em dev; S3/R2 ou o próprio banco em produção)."""
 
 import asyncio
 import shutil
 from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator
+from datetime import datetime
 from pathlib import Path
 from typing import BinaryIO
 
+from sqlalchemy import LargeBinary, String, delete, select, text
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from sqlalchemy.orm import Mapped, mapped_column
+
 from app.core.config import Settings, get_settings
+from app.core.database import Base, SessionLocal, UTCDateTime
+from app.shared.utils import utcnow
 
 CHUNK = 64 * 1024
 
@@ -71,13 +78,14 @@ class LocalStorage(StorageBackend):
 
 
 class S3Storage(StorageBackend):
-    """Compatível com S3 e MinIO. Requer `pip install .[s3]` (boto3). Não coberto pelos testes automatizados."""
+    """Compatível com S3, R2 e MinIO. Não coberto pelos testes automatizados."""
 
     def __init__(self, settings: Settings) -> None:
         try:
             import boto3
+            from botocore.config import Config
         except ImportError as exc:  # pragma: no cover
-            raise RuntimeError("STORAGE_BACKEND=s3 requer a dependência boto3 (pip install .[s3]).") from exc
+            raise RuntimeError("STORAGE_BACKEND=s3 requer a dependência boto3.") from exc
         if not settings.s3_bucket:
             raise RuntimeError("S3_BUCKET não configurado.")
         self.bucket = settings.s3_bucket
@@ -87,6 +95,8 @@ class S3Storage(StorageBackend):
             aws_access_key_id=settings.s3_access_key,
             aws_secret_access_key=settings.s3_secret_key,
             region_name=settings.s3_region,
+            # R2/MinIO não aceitam os checksums extras que o boto3 recente envia por padrão.
+            config=Config(request_checksum_calculation="when_required", response_checksum_validation="when_required"),
         )
 
     async def save(self, key: str, fileobj: BinaryIO) -> None:
@@ -125,6 +135,56 @@ class S3Storage(StorageBackend):
         return await asyncio.to_thread(_check)
 
 
+class ArquivoArmazenado(Base):
+    """Conteúdo dos arquivos quando `STORAGE_BACKEND=db` (BLOB/bytea, uma linha por chave)."""
+
+    __tablename__ = "arquivos"
+
+    chave: Mapped[str] = mapped_column(String(500), primary_key=True)
+    conteudo: Mapped[bytes] = mapped_column(LargeBinary)
+    tamanho: Mapped[int]
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class DatabaseStorage(StorageBackend):
+    """Guarda os arquivos no próprio banco (tabela `arquivos`). Dispensa S3; adequado a arquivos pequenos.
+
+    Usa sessões próprias: o arquivo é gravado antes do commit do documento, como nos demais backends
+    (e removido pelo serviço se esse commit falhar).
+    """
+
+    def __init__(self, sessionmaker: async_sessionmaker[AsyncSession] = SessionLocal) -> None:
+        self.sessionmaker = sessionmaker
+
+    async def save(self, key: str, fileobj: BinaryIO) -> None:
+        conteudo = await asyncio.to_thread(fileobj.read)
+        async with self.sessionmaker() as session:
+            await session.merge(ArquivoArmazenado(chave=key, conteudo=conteudo, tamanho=len(conteudo)))
+            await session.commit()
+
+    async def open(self, key: str) -> AsyncIterator[bytes]:  # type: ignore[override]
+        async with self.sessionmaker() as session:
+            conteudo = await session.scalar(select(ArquivoArmazenado.conteudo).where(ArquivoArmazenado.chave == key))
+        if conteudo is None:
+            raise FileNotFoundError(key)
+        for inicio in range(0, len(conteudo), CHUNK):
+            yield conteudo[inicio : inicio + CHUNK]
+
+    async def delete(self, key: str) -> None:
+        async with self.sessionmaker() as session:
+            await session.execute(delete(ArquivoArmazenado).where(ArquivoArmazenado.chave == key))
+            await session.commit()
+
+    async def exists(self, key: str) -> bool:
+        async with self.sessionmaker() as session:
+            return await session.scalar(select(ArquivoArmazenado.chave).where(ArquivoArmazenado.chave == key)) is not None
+
+    async def healthcheck(self) -> bool:
+        async with self.sessionmaker() as session:
+            await session.execute(text("SELECT 1"))
+        return True
+
+
 _storage: StorageBackend | None = None
 
 
@@ -133,5 +193,10 @@ def get_storage() -> StorageBackend:
     global _storage
     if _storage is None:
         settings = get_settings()
-        _storage = S3Storage(settings) if settings.storage_backend == "s3" else LocalStorage(settings.storage_local_path)
+        if settings.storage_backend == "s3":
+            _storage = S3Storage(settings)
+        elif settings.storage_backend == "db":
+            _storage = DatabaseStorage()
+        else:
+            _storage = LocalStorage(settings.storage_local_path)
     return _storage

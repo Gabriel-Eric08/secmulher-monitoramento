@@ -117,7 +117,15 @@
     const input = $("input[type=file]", dz), label = $(".dz-label", dz);
     const idle = label.innerHTML;
     const human = (n) => n < 1024 ? `${n} B` : n < 1048576 ? `${(n / 1024).toFixed(0)} KB` : `${(n / 1048576).toFixed(1)} MB`;
-    const show = () => { const f = input.files[0]; label.innerHTML = f ? `<span class="dz-file"><i class="bi bi-file-earmark-check"></i> ${f.name.replace(/</g, "&lt;")}</span><br><small class="text-muted">${human(f.size)} — clique para trocar</small>` : idle; };
+    const maxMb = Number(dz.dataset.maxMb) || 0;
+    const show = () => {
+      const g = input.files[0];
+      if (g && maxMb && g.size > maxMb * 1048576) {  // o servidor (e a Vercel, acima de 4,5 MB) recusaria
+        toast("error", `Arquivo maior que o máximo permitido (${maxMb} MB).`);
+        input.value = "";
+      }
+      const f = input.files[0]; label.innerHTML = f ? `<span class="dz-file"><i class="bi bi-file-earmark-check"></i> ${f.name.replace(/</g, "&lt;")}</span><br><small class="text-muted">${human(f.size)} — clique para trocar</small>` : idle;
+    };
     input.addEventListener("change", show);
     ["dragenter", "dragover"].forEach((ev) => dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.add("drag"); }));
     ["dragleave", "drop"].forEach((ev) => dz.addEventListener(ev, () => dz.classList.remove("drag")));

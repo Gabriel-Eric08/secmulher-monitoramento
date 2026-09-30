@@ -138,7 +138,8 @@ ACAO_CLASSE = {
     "READ_SENSITIVE": "ac-leitura", "LOGIN": "ac-login", "LOGIN_FAILED": "ac-excluir", "LOGOUT": "ac-login",
 }
 templates.env.globals.update(
-    STATUS_CLASSE=STATUS_CLASSE, STATUS_ICONE=STATUS_ICONE, EVENTO_ICONE=EVENTO_ICONE, ACAO_CLASSE=ACAO_CLASSE
+    STATUS_CLASSE=STATUS_CLASSE, STATUS_ICONE=STATUS_ICONE, EVENTO_ICONE=EVENTO_ICONE, ACAO_CLASSE=ACAO_CLASSE,
+    max_upload_mb=get_settings().max_upload_mb,
 )
 
 PERFIS = {

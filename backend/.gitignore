@@ -8,3 +8,6 @@ __pycache__/
 storage/*
 !storage/.gitkeep
 *.egg-info/
+.vercel
+.env*
+!.env.example

@@ -1,7 +1,9 @@
+import os
 from functools import lru_cache
 from typing import Literal
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
-from pydantic import model_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 SECRET_KEY_PADRAO = "troque-isto-por-um-segredo-longo-e-aleatorio"
@@ -15,6 +17,8 @@ class Settings(BaseSettings):
     app_version: str = "1.0.0"
 
     database_url: str = "sqlite+aiosqlite:///./dev.db"
+    # Serverless (Vercel): sem pool de conexões e sem cache de prepared statements (pooler do Neon/PgBouncer).
+    db_serverless: bool = bool(os.environ.get("VERCEL"))
 
     secret_key: str = SECRET_KEY_PADRAO
     jwt_algorithm: str = "HS256"
@@ -26,7 +30,7 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:3000,http://localhost:8080"
     docs_enabled: bool = True
 
-    storage_backend: Literal["local", "s3"] = "local"
+    storage_backend: Literal["local", "s3", "db"] = "local"
     storage_local_path: str = "./storage"
     s3_endpoint: str | None = None
     s3_bucket: str | None = None
@@ -43,6 +47,21 @@ class Settings(BaseSettings):
     @property
     def max_upload_bytes(self) -> int:
         return self.max_upload_mb * 1024 * 1024
+
+    @field_validator("database_url")
+    @classmethod
+    def _normalizar_database_url(cls, url: str) -> str:
+        """Aceita a URL como o provedor entrega (`postgres://...?sslmode=require`) e adapta ao asyncpg."""
+        partes = urlsplit(url)
+        if partes.scheme not in ("postgres", "postgresql", "postgresql+asyncpg"):
+            return url
+        query = []
+        for chave, valor in parse_qsl(partes.query):
+            if chave == "sslmode":
+                query.append(("ssl", valor))
+            elif chave != "channel_binding":  # o asyncpg não conhece este parâmetro
+                query.append((chave, valor))
+        return urlunsplit(partes._replace(scheme="postgresql+asyncpg", query=urlencode(query)))
 
     @model_validator(mode="after")
     def _exigir_segredo_em_producao(self) -> "Settings":

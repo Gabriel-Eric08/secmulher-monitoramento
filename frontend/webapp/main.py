@@ -30,12 +30,13 @@ def create_app(settings: Settings | None = None, transport: httpx.AsyncBaseTrans
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
-        app.state.http = httpx.AsyncClient(base_url=settings.api_base_url, timeout=30.0, transport=transport)
-        app.state.meta = None
         yield
         await app.state.http.aclose()
 
     app = FastAPI(title=settings.app_name, docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
+    # Criado aqui, e não no lifespan: em serverless (Vercel) o lifespan pode não ser executado.
+    app.state.http = httpx.AsyncClient(base_url=settings.api_base_url, timeout=30.0, transport=transport)
+    app.state.meta = None
     app.add_middleware(
         SessionMiddleware,
         secret_key=settings.secret_key,

@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     cookie_secure: bool = False
     session_max_age_days: int = 7
     timezone: str = "America/Sao_Paulo"
+    max_upload_mb: int = 20  # só o texto exibido; quem valida é o backend (mesmo valor lá)
 
     @model_validator(mode="after")
     def _segredo_em_producao(self) -> "Settings":

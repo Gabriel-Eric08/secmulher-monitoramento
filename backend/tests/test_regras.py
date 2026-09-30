@@ -214,6 +214,34 @@ async def test_arquivo_orfao_removido_se_commit_falha(client, cenario, monkeypat
     assert arquivos == []
 
 
+
+async def test_storage_no_banco(client, cenario, sessionmaker_, monkeypatch):
+    """STORAGE_BACKEND=db: upload, versões e download saem da tabela `arquivos`; órfão é removido."""
+    from app.core.storage import ArquivoArmazenado, DatabaseStorage, get_storage
+    from app.main import app
+    from app.modules.documentos import service as svc
+    from app.shared.exceptions import Conflito
+
+    app.dependency_overrides[get_storage] = lambda: DatabaseStorage(sessionmaker_)
+    h, mid = cenario["h"], cenario["mid"]
+    r = await client.post(f"{API}/mulheres/{mid}/documentos", data={"titulo": "RG digitalizado", "tipo": "IDENTIFICACAO"}, files=upload(pdf("v1")), headers=h)
+    assert r.status_code == 201, r.text
+    did = r.json()["id"]
+    assert (await client.post(f"{API}/documentos/{did}/versoes", data={"motivo": "Renovação"}, files=upload(pdf("v2")), headers=h)).status_code == 201
+    assert (await client.get(f"{API}/documentos/{did}/download", headers=h)).content == pdf("v2")
+    assert (await client.get(f"{API}/documentos/{did}/versoes/1/download", headers=h)).content == pdf("v1")
+
+    async def _falha(*a, **k):
+        raise Conflito("commit falhou", code="FALHA_SIMULADA")
+
+    monkeypatch.setattr(svc, "confirmar", _falha)
+    r = await client.post(f"{API}/mulheres/{mid}/documentos", data={"titulo": "Doc órfão", "tipo": "OUTRO"}, files=upload(pdf("orfao")), headers=h)
+    assert r.status_code == 409
+    async with sessionmaker_() as s:
+        assert await s.scalar(select(func.count()).select_from(ArquivoArmazenado)) == 2
+    assert (await client.get("/health/ready")).json()["storage"] is True
+
+
 # ---------- auditoria ----------
 async def test_auditoria_registra_antes_e_depois_e_ip(client, cenario, headers):
     h, mid = cenario["h"], cenario["mid"]

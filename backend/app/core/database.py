@@ -6,7 +6,7 @@ from sqlalchemy import DateTime, MetaData, Uuid, event
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy.pool import StaticPool
+from sqlalchemy.pool import NullPool, StaticPool
 from sqlalchemy.types import TypeDecorator
 
 from app.core.config import get_settings
@@ -63,6 +63,8 @@ def criar_engine(url: str) -> AsyncEngine:
     sqlite = url.startswith("sqlite")
     if sqlite and ":memory:" in url:
         kwargs.update(poolclass=StaticPool, connect_args={"check_same_thread": False})
+    elif not sqlite and get_settings().db_serverless:
+        kwargs.update(poolclass=NullPool, connect_args={"statement_cache_size": 0})
     engine = create_async_engine(url, **kwargs)
     if sqlite:
 

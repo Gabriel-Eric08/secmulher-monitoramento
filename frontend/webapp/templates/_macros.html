@@ -91,9 +91,9 @@
 {% endmacro %}
 
 {% macro dropzone(name='arquivo', texto='Arraste o arquivo aqui ou clique para escolher', required=True) %}
-<div class="dropzone">
+<div class="dropzone" data-max-mb="{{ max_upload_mb }}">
   <input type="file" name="{{ name }}" {{ 'required' if required }} accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xlsx">
-  <div class="dz-label"><i class="bi bi-cloud-arrow-up dz-icon"></i><strong>{{ texto }}</strong><br><small class="text-muted">PDF, JPG, PNG, DOC/DOCX ou XLSX — até 20 MB</small></div>
+  <div class="dz-label"><i class="bi bi-cloud-arrow-up dz-icon"></i><strong>{{ texto }}</strong><br><small class="text-muted">PDF, JPG, PNG, DOC/DOCX ou XLSX — até {{ max_upload_mb }} MB</small></div>
 </div>
 {% endmacro %}
 

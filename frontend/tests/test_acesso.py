@@ -1,6 +1,7 @@
 """Login, sessão, CSRF, permissões por perfil e segurança básica."""
 
 import asyncio
+import re
 
 import httpx
 import pytest
@@ -132,3 +133,16 @@ async def test_sessao_invalida_volta_ao_login_com_aviso(sessoes, backend):
     assert r.status_code == 303 and r.headers["location"].startswith("/login")
     r = await c.get("/login")
     assert "expirou" in r.text.lower()
+
+
+async def test_formularios_trazem_o_token_csrf_da_sessao(sessoes):
+    """Cada formulário deve enviar o próprio token (e não depender do token do formulário de logout)."""
+    c = sessoes["ADMIN"]
+    for pagina in ("/mulheres/nova", "/servicos/novo", "/eventos/novo", "/vinculos/novo", "/documentos/novo", "/usuarios/novo", "/perfil"):
+        html = (await c.get(pagina)).text
+        tokens = set(re.findall(r'name="csrf_token" value="([^"]*)"', html))
+        assert len(tokens) == 1 and "Macro" not in next(iter(tokens)), (pagina, tokens)
+    # envia exatamente o token que o formulário de cadastro traz
+    campo = re.findall(r'name="csrf_token" value="([^"]*)"', (await c.get("/mulheres/nova")).text)[-1]
+    r = await c.post("/mulheres/nova", data={"nome_completo": "Maria do Formulário", "csrf_token": campo})
+    assert r.status_code == 303, r.text[:300]

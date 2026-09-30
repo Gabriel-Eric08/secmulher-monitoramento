@@ -1,6 +1,7 @@
 {# Componentes reutilizáveis (equivalentes aos do shadcn/ui). Importar com: {% import "_macros.html" as ui with context %} #}
 
-{% macro csrf() %}<input type="hidden" name="csrf_token" value="{{ csrf }}">{% endmacro %}
+{# Aqui dentro "csrf" é a própria macro (sombreia a variável do contexto): o token vem da sessão. #}
+{% macro csrf() %}<input type="hidden" name="csrf_token" value="{{ request.session.get('csrf', '') }}">{% endmacro %}
 
 {% macro status(valor) -%}
   <span class="status-badge {{ STATUS_CLASSE.get(valor, '') }}">{{ rot('status_servico_mulher', valor) }}</span>
